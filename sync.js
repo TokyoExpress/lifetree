@@ -1,7 +1,8 @@
 // Cloud sync through Firebase (Google sign-in + one Firestore document per user).
 // The app keeps working from localStorage; this module mirrors the save to users/{uid}
 // and pulls changes made on other devices. Inert until firebase-config.js has a config.
-import { firebaseConfig } from './firebase-config.js';
+// Load the config with the same ?v= as this file so a new deploy never pairs with a cached config.
+const { firebaseConfig } = await import('./firebase-config.js' + new URL(import.meta.url).search);
 
 const lt = window.lifetree;
 const FIREBASE = 'https://www.gstatic.com/firebasejs/10.12.2/';

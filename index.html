@@ -476,8 +476,8 @@
 </dialog>
 
 <div id="dropLine"></div>
-<script src="icons.js"></script>
-<script type="module" src="sync.js"></script>
+<script src="icons.js?v=1790355170"></script>
+<script type="module" src="sync.js?v=1790355170"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -510,7 +510,7 @@ const DEFAULT_SKILLS = [
   ['drawing', 'arts', 'Visual Arts', 'Drawing', 'pencil', 'Piece', 'sessions'],
   ['graphicdesign', 'arts', 'Visual Arts', 'Graphic Design', 'pencil-ruler', 'Project', 'iterations'],
   ['videoediting', 'arts', 'Visual Arts', 'Video Editing', 'video-camera', 'Video', 'edits'],
-  ['modeling3d', 'arts', 'Visual Arts', '3D Modeling', 'cubes', 'Model', 'iterations'],
+  ['photography', 'arts', 'Visual Arts', 'Photography', 'photo-camera', 'Shoot', 'sessions'],
   ['woodworking', 'arts', 'Crafts', 'Woodworking', 'hand-saw', 'Project', 'built'],
   ['metalworking', 'arts', 'Crafts', 'Metalworking', 'anvil-impact', 'Project', 'built'],
   ['pottery', 'arts', 'Crafts', 'Pottery', 'painted-pottery', 'Piece', 'made'],
@@ -519,6 +519,7 @@ const DEFAULT_SKILLS = [
   ['writing', 'arts', 'Literary', 'Writing', 'quill-ink', 'Piece', 'drafts'],
   ['electrical', 'arts', 'Engineering', 'Electrical Engineering', 'circuitry', 'Project', 'built'],
   ['software', 'arts', 'Engineering', 'Software Engineering', 'keyboard', 'Project', 'shipped'],
+  ['modeling3d', 'arts', 'Engineering', '3D Modeling', 'cubes', 'Model', 'iterations'],
 
   ['social', 'exp', 'People', 'Social', 'three-friends', 'Person', 'hangouts'],
   ['travel', 'exp', 'World', 'Travel', 'airplane-departure', 'Place', 'visits'],
@@ -541,7 +542,7 @@ function makeSkill([id, cat, group, name, icon, noun, count]) {
 function freshState() {
   return {
     profile: { name: 'Player One', birth: '', lifespan: 80, avatar: 'wizard-staff', sleep: 8, busy: 8 },
-    version: 5,
+    version: 6,
     skills: DEFAULT_SKILLS.map(makeSkill),
     logs: [],    // time: { id, skill, minutes, date, note, ts }
     items: [],   // counters: { id, skill, name, ts }
@@ -591,6 +592,22 @@ function migrate() {
     if (ent && !ent.base && !state.logs.some(l => l.skill === 'entertainment') && !state.items.some(i => i.skill === 'entertainment') && !(state.records || []).some(r => r.skill === 'entertainment'))
       state.skills = state.skills.filter(s => s !== ent);
     state.version = 5;
+  }
+  if ((state.version || 0) < 6) {
+    // v6: 3D Modeling moves to Engineering (unless you've moved it yourself); add Photography
+    const m = state.skills.find(s => s.id === 'modeling3d');
+    if (m && m.cat === 'arts' && m.group === 'Visual Arts') {
+      state.skills.splice(state.skills.indexOf(m), 1);
+      m.group = 'Engineering';
+      const last = state.skills.findLastIndex(s => s.cat === 'arts' && s.group === 'Engineering');
+      state.skills.splice(last < 0 ? state.skills.length : last + 1, 0, m);
+    }
+    if (!state.skills.some(s => s.id === 'photography')) {
+      const p = makeSkill(DEFAULT_SKILLS.find(d => d[0] === 'photography'));
+      const last = state.skills.findLastIndex(s => s.cat === 'arts' && s.group === 'Visual Arts');
+      state.skills.splice(last < 0 ? state.skills.length : last + 1, 0, p);
+    }
+    state.version = 6;
   }
   state.profile.sleep ??= 8;
   state.profile.busy ??= 8;
