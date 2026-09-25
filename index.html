@@ -837,8 +837,7 @@ function renderDetail(bySkill, byCat) {
   if (!s) {
     el.style.removeProperty('--c');
     el.innerHTML = `<h2>Overview</h2>
-      ${CATS.map(c => `<div class="stat"><span style="color:${c.color}">${icon(c.icon)}</span> <span>${c.name}</span><b style="color:${c.color}">Lv ${lvl(byCat[c.id] || 0, CAT_K)} · ${fmtH(byCat[c.id] || 0)}</b></div>`).join('')}
-      <p class="muted">Click a skill to log hours${state.skills.some(x => x.items) ? ' and keep count of songs, dishes and projects' : ''}.</p>`;
+      ${CATS.map(c => `<div class="stat"><span style="color:${c.color}">${icon(c.icon)}</span> <span>${c.name}</span><b style="color:${c.color}">Lv ${lvl(byCat[c.id] || 0, CAT_K)} · ${fmtH(byCat[c.id] || 0)}</b></div>`).join('')}`;
     return;
   }
   const c = cat(s.cat);
