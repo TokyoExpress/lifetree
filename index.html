@@ -300,7 +300,17 @@
   .rank-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .rank-note p { margin: 0; }
   .rank-list { display: flex; flex-direction: column; gap: 6px; }
-  .rank-row { display: grid; grid-template-columns: 36px 40px 1fr auto 70px; gap: 10px; align-items: center; padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; }
+  .rank-row { display: grid; grid-template-columns: 36px 40px 1fr auto 76px; gap: 10px; align-items: center; padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; }
+  .rank-row .rmid { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .rank-row .rnm small { display: inline; margin-left: 4px; }
+  .rbar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,.04); }
+  .rbar div { flex: none; height: 100%; background: var(--c); }
+  .rbar div.start, .rank-legend i.start { background: repeating-linear-gradient(135deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 35%, transparent) 3px 6px); }
+  .rank-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 2px 0 4px; }
+  .rank-legend span { display: flex; align-items: center; gap: 5px; }
+  .rank-legend i { width: 12px; height: 10px; border-radius: 2px; display: inline-block; }
+  .rank-row .rh small { display: block; font-family: 'Chakra Petch', sans-serif; font-size: 10px; color: var(--muted); }
+  .rank-err { color: var(--danger); width: 100%; }
   .rank-row .rk { font-family: Silkscreen, monospace; font-size: 18px; color: var(--muted); text-align: center; }
   .rank-row .rav { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; font-size: 24px; color: #0b0d17; background: linear-gradient(135deg, var(--accent), #3ad0ff); }
   .rank-row .rnm { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -621,8 +631,8 @@
     <div class="ob-alt" id="obAlt"></div>
   </div>
 </div>
-<script src="icons.js?v=1790356318"></script>
-<script type="module" src="sync.js?v=1790356318"></script>
+<script src="icons.js?v=1790356795"></script>
+<script type="module" src="sync.js?v=1790356795"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -839,10 +849,23 @@ window.lifetree = {
   // What the public leaderboard shows about you, or null when you haven't opted in.
   publicProfile() {
     if (!state.profile.public) return null;
-    const { bySkill, all } = totals();
-    const skills = {};
-    for (const s of state.skills) if (bySkill[s.id] > 0) skills[s.id] = Math.round(bySkill[s.id] * 100) / 100;
-    return { name: (state.profile.name || 'Player One').slice(0, 40), avatar: state.profile.avatar, cls: (state.profile.class || '').slice(0, 40), total: Math.round(all * 100) / 100, skills };
+    const r2 = h => Math.round(h * 100) / 100;
+    const logged = {};
+    for (const l of state.logs) logged[l.skill] = (logged[l.skill] || 0) + l.minutes / 60;
+    // skills: total hours (what boards sort by); base: the starting-hours part; cats: logged/starting per category
+    const skills = {}, base = {}, cats = {};
+    let total = 0, totalBase = 0;
+    for (const s of state.skills) {
+      const l = logged[s.id] || 0, b = s.base || 0;
+      if (l + b <= 0) continue;
+      skills[s.id] = r2(l + b);
+      if (b) base[s.id] = r2(b);
+      cats[s.cat] ??= { l: 0, b: 0 };
+      cats[s.cat].l = r2(cats[s.cat].l + l); cats[s.cat].b = r2(cats[s.cat].b + b);
+      total += l + b; totalBase += b;
+    }
+    return { name: (state.profile.name || 'Player One').slice(0, 40), avatar: state.profile.avatar, cls: (state.profile.class || '').slice(0, 40),
+      total: r2(total), totalBase: r2(totalBase), skills, base, cats };
   },
 };
 let syncInfo = { configured: false, user: null, msg: '' };
@@ -1325,7 +1348,7 @@ function skillOptions(selected, blank) {
       `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</optgroup>`).join('');
 }
 // ---------- Leaderboards ----------
-let rankCache = { field: null, at: 0, rows: null, err: null }, rankReq = 0;
+let rankCache = { field: null, at: 0, rows: null, err: null }, rankReq = 0, rankPublished = false;
 function rankOptions(selected) {
   const seen = new Map();
   for (const d of libraryEntries()) seen.set(d.id, d);
@@ -1343,6 +1366,12 @@ function renderRanks(force) {
     : !i.user ? `<p class="muted">Sign in to put yourself on the boards.</p><button class="primary small" id="rankSignIn">Sign in with Google</button>`
     : !state.profile.public ? `<p class="muted">You're not on the leaderboards yet.</p><button class="primary small" id="rankJoin">Join as ${esc(state.profile.name)}</button>`
     : `<p class="muted">You're on the boards as <b style="color:var(--text)">${esc(state.profile.name)}</b>. Change your name or avatar in Settings.</p>`;
+  if (i.error) $('#rankNote').insertAdjacentHTML('beforeend', `<p class="rank-err">${esc(i.error)}</p>`);
+  // Joined but never uploaded this session (e.g. joined before the rules allowed it): upload now.
+  if (i.user && state.profile.public && window.cloud && !rankPublished) {
+    rankPublished = true;
+    window.cloud.publishProfile().then(() => { rankCache.at = 0; renderRanks(true); });
+  }
   const list = $('#rankList');
   if (!window.cloud) { list.innerHTML = `<p class="muted">${i.configured ? 'Loading…' : ''}</p>`; return; }
   const field = sel === 'total' ? 'total' : `skills.${sel}`;
@@ -1358,15 +1387,31 @@ function drawRanks(sel) {
   const { rows, err } = rankCache, meId = window.cloud?.uid();
   if (err) return $('#rankList').innerHTML = `<p class="muted">Couldn't load the leaderboard (${esc(err)}).</p>`;
   if (!rows?.length) return $('#rankList').innerHTML = `<p class="muted rank-empty">Nobody's on this board yet.${state.profile.public ? ' Log some time to claim #1.' : ''}</p>`;
-  const k = sel === 'total' ? CHAR_K : SKILL_K;
-  $('#rankList').innerHTML = rows.map((r, n) => {
-    const h = sel === 'total' ? r.total : r.skills?.[sel] || 0, L = lvl(h, k);
+  const overall = sel === 'total', k = overall ? CHAR_K : SKILL_K;
+  const sk = !overall && (libraryEntries().find(d => d.id === sel) || skill(sel));
+  const color = sk ? cat(sk.cat)?.color : 'var(--accent)';
+  // Segments of each bar: logged (solid) then starting hours (striped); per category on the overall board.
+  const parts = r => overall
+    ? CATS.flatMap(c => [{ h: r.cats?.[c.id]?.l || 0, c: c.color }, { h: r.cats?.[c.id]?.b || 0, c: c.color, start: true }])
+    : [{ h: (r.skills?.[sel] || 0) - (r.base?.[sel] || 0), c: color }, { h: r.base?.[sel] || 0, c: color, start: true }];
+  const hours = r => overall ? r.total || 0 : r.skills?.[sel] || 0;
+  const max = Math.max(...rows.map(hours), 0.01);
+  const legend = `<div class="rank-legend">
+    ${overall ? CATS.map(c => `<span><i style="background:${c.color}"></i>${c.name}</span>`).join('') : `<span><i style="background:${color}"></i>Logged</span>`}
+    <span><i class="start" style="--c:${overall ? '#8a90b5' : color}"></i>Starting hours</span></div>`;
+  $('#rankList').innerHTML = legend + rows.map((r, n) => {
+    const h = hours(r), L = lvl(h, k), start = overall ? r.totalBase || 0 : r.base?.[sel] || 0;
+    const bar = parts(r).filter(p => p.h > 0).map(p =>
+      `<div class="${p.start ? 'start' : ''}" style="--c:${p.c};width:${p.h / max * 100}%"></div>`).join('');
     return `<div class="rank-row ${r.uid === meId ? 'me' : ''} ${n < 3 ? 'top' + (n + 1) : ''}">
       <span class="rk">${n + 1}</span>
       <span class="rav">${icon(r.avatar) || icon('wizard-staff')}</span>
-      <span class="rnm">${esc(r.name || 'Player')}${r.uid === meId ? ' <span class="you">you</span>' : ''}<small>${esc(r.cls || '')}</small></span>
-      <span class="rlv">Lv ${L}<small>${sel === 'total' ? '' : titleFor(L)}</small></span>
-      <span class="rh">${fmtH(h)}</span>
+      <div class="rmid">
+        <span class="rnm">${esc(r.name || 'Player')}${r.uid === meId ? ' <span class="you">you</span>' : ''}${r.cls ? ` <small>${esc(r.cls)}</small>` : ''}</span>
+        <div class="rbar" title="${fmtH(h - start)} logged${start ? ` + ${fmtH(start)} starting` : ''}">${bar}</div>
+      </div>
+      <span class="rlv">Lv ${L}<small>${overall ? '' : titleFor(L)}</small></span>
+      <span class="rh">${fmtH(h)}${start ? `<small>${fmtH(start)} start</small>` : ''}</span>
     </div>`;
   }).join('');
 }

@@ -42,8 +42,8 @@ async function start() {
   async function publishProfile() {
     if (!me) return;
     const p = lt.publicProfile(), pref = F.doc(db, 'profiles', me.uid);
-    try { p ? await F.setDoc(pref, { ...p, updatedAt: Date.now() }) : await F.deleteDoc(pref); }
-    catch (e) { lt.status({ msg: `Leaderboard update failed (${e.code || e.message}).` }); }
+    try { p ? await F.setDoc(pref, { ...p, updatedAt: Date.now() }) : await F.deleteDoc(pref); lt.status({ error: null }); }
+    catch (e) { lt.status({ error: `Couldn't update your leaderboard entry (${e.code || e.message}).` }); }
   }
 
   window.cloud = {
@@ -80,6 +80,7 @@ async function start() {
     unsub?.(); unsub = null; ref = null; me = user;
     lt.status({ user: user ? (user.email || user.displayName) : null, msg: '' });
     if (!user) return;
+    if (lt.publicProfile()) publishProfile(); // keep the leaderboard entry current on every sign-in / page load
     ref = F.doc(db, 'users', user.uid);
     let first = true;
     unsub = F.onSnapshot(ref, snap => {
