@@ -514,8 +514,6 @@
         <div class="card" style="margin-bottom:16px">
           <h2>Starting hours</h2>
           <p class="muted">Each skill can have starting hours: your estimate of time spent before you started logging. They count toward levels and your all-time total, but not toward past day, week, month or year, the heatmap or your streak. Set them with "Edit skill".</p>
-          <button id="convertBtn">Turn all current time logs into starting hours</button>
-          <p class="muted" id="convertNote" style="margin-bottom:0"></p>
         </div>
         <div class="card">
           <h2>Save data</h2>
@@ -631,8 +629,8 @@
     <div class="ob-alt" id="obAlt"></div>
   </div>
 </div>
-<script src="icons.js?v=1790356795"></script>
-<script type="module" src="sync.js?v=1790356795"></script>
+<script src="icons.js?v=1790356927"></script>
+<script type="module" src="sync.js?v=1790356927"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -1859,16 +1857,6 @@ $('#syncActions').addEventListener('click', e => {
   if (e.target.closest('#syncOut')) window.cloudSignOut?.();
 });
 $('#lbPublic').addEventListener('change', e => setPublic(e.target.checked));
-$('#convertBtn').addEventListener('click', () => {
-  const n = state.logs.length;
-  if (!n) { $('#convertNote').textContent = 'There are no time logs to convert.'; return; }
-  const h = state.logs.reduce((a, l) => a + l.minutes, 0) / 60;
-  if (!confirm(`Move all ${n} time logs (${fmtH(h)}) into starting hours? Each skill keeps its total and level, but the individual log entries are removed.`)) return;
-  for (const l of state.logs) { const s = skill(l.skill); if (s) s.base = (s.base || 0) + l.minutes / 60; }
-  state.logs = [];
-  save(); render();
-  $('#convertNote').textContent = `Done. ${fmtH(h)} moved into starting hours.`;
-});
 $('#resetBtn').addEventListener('click', () => {
   const cloud = syncInfo.user ? ' Your cloud save will be replaced too once you pick a new start.' : '';
   if (!confirm(`Start over? This deletes all your skills, logs and settings on this device.${cloud} Export a backup first if you want one.`)) return;
