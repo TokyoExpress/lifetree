@@ -260,6 +260,7 @@
   .lib-head h2 { margin: 0; }
   #libSearch { width: 100%; }
   .lib-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .lib-tabs #libSort { margin-left: auto; }
   .lib-tabs button { font-family: Silkscreen, monospace; font-size: 12px; color: var(--muted); }
   .lib-tabs button.on { color: var(--c, var(--gold)); border-color: var(--c, var(--gold)); background: color-mix(in srgb, var(--c, var(--gold)) 12%, transparent); }
   .lib-list { overflow-y: auto; min-height: 200px; padding-right: 4px; }
@@ -634,8 +635,8 @@
     <div class="ob-alt" id="obAlt"></div>
   </div>
 </div>
-<script src="icons.js?v=1790377584"></script>
-<script type="module" src="sync.js?v=1790377584"></script>
+<script src="icons.js?v=1790377884"></script>
+<script type="module" src="sync.js?v=1790377884"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -708,37 +709,21 @@ const EXTRA_SKILLS = [
   ['ultimate', 'strdex', 'Team Sports', 'Ultimate Frisbee', 'frisbee'],
   ['rugby', 'strdex', 'Team Sports', 'Rugby', 'rugby-conversion'],
   ['cricket', 'strdex', 'Team Sports', 'Cricket', 'cricket-bat'],
-  ['softball', 'strdex', 'Team Sports', 'Softball', 'baseball-glove'],
   ['tabletennis', 'strdex', 'Racket Sports', 'Table Tennis', 'ping-pong-bat'],
   ['squash', 'strdex', 'Racket Sports', 'Squash', 'tennis-ball'],
   ['pilates', 'strdex', 'Strength', 'Pilates', 'body-balance'],
-  ['kettlebells', 'strdex', 'Strength', 'Kettlebells', 'weight'],
-  ['powerlifting', 'strdex', 'Strength', 'Powerlifting', 'weight-lifting-down'],
   ['mobility', 'strdex', 'Strength', 'Stretching & Mobility', 'split-body'],
   ['gymnastics', 'strdex', 'Strength', 'Gymnastics', 'acrobatic'],
   ['fencing', 'strdex', 'Combat', 'Fencing', 'fencer'],
-  ['wrestling', 'strdex', 'Combat', 'Wrestling', 'grab'],
-  ['bjj', 'strdex', 'Combat', 'Jiu-Jitsu', 'black-belt'],
-  ['muaythai', 'strdex', 'Combat', 'Muay Thai', 'leg'],
-  ['bouldering', 'strdex', 'Mountain', 'Bouldering', 'stone-block'],
-  ['mountaineering', 'strdex', 'Mountain', 'Mountaineering', 'mountains'],
-  ['xcski', 'strdex', 'Mountain', 'Cross-Country Skiing', 'skier'],
-  ['trailrunning', 'strdex', 'Outdoor', 'Trail Running', 'run'],
-  ['triathlon', 'strdex', 'Outdoor', 'Triathlon', 'podium-winner'],
   ['horseriding', 'strdex', 'Outdoor', 'Horseback Riding', 'horse-head'],
-  ['iceskating', 'strdex', 'Outdoor', 'Ice Skating', 'ice-skate'],
-  ['rollerskating', 'strdex', 'Outdoor', 'Roller Skating', 'roller-skate'],
-  ['kayaking', 'strdex', 'Water', 'Kayaking', 'canoe'],
-  ['rowing', 'strdex', 'Water', 'Rowing', 'waves'],
+  ['iceskating', 'strdex', 'Outdoor', 'Skating', 'ice-skate'],
+  ['kayaking', 'strdex', 'Water', 'Paddling', 'canoe'],
   ['surfing', 'strdex', 'Water', 'Surfing', 'wave-surfer'],
   ['sailing', 'strdex', 'Water', 'Sailing', 'sailboat'],
   ['diving', 'strdex', 'Water', 'Scuba Diving', 'diving-helmet'],
   ['dance', 'strdex', 'Movement', 'Dance', 'ballerina-shoes'],
   ['parkour', 'strdex', 'Movement', 'Parkour', 'jump-across'],
   ['juggling', 'strdex', 'Movement', 'Juggling', 'juggler'],
-  ['jumprope', 'strdex', 'Movement', 'Jump Rope', 'jumping-rope'],
-  ['walking', 'strdex', 'Movement', 'Walking', 'walking-boot'],
-  ['taichi', 'strdex', 'Movement', 'Tai Chi', 'yin-yang'],
 
   ['singing', 'arts', 'Music', 'Singing', 'microphone', 'Song', 'full playthroughs'],
   ['violin', 'arts', 'Music', 'Violin', 'violin', 'Song', 'full playthroughs'],
@@ -747,9 +732,7 @@ const EXTRA_SKILLS = [
   ['harp', 'arts', 'Music', 'Harp', 'harp', 'Song', 'full playthroughs'],
   ['production', 'arts', 'Music', 'Music Production', 'headphones', 'Track', 'versions'],
   ['painting', 'arts', 'Visual Arts', 'Painting', 'paint-brush', 'Piece', 'sessions'],
-  ['streetart', 'arts', 'Visual Arts', 'Street Art', 'spray', 'Piece', 'made'],
   ['filmmaking', 'arts', 'Visual Arts', 'Filmmaking', 'film-strip', 'Film', 'cuts'],
-  ['poetry', 'arts', 'Literary', 'Poetry', 'feather', 'Poem', 'drafts'],
   ['calligraphy', 'arts', 'Literary', 'Calligraphy', 'scroll-quill', 'Piece', 'made'],
   ['robotics', 'arts', 'Engineering', 'Robotics', 'gears', 'Project', 'built'],
   ['cello', 'arts', 'Music', 'Cello', 'violin', 'Song', 'full playthroughs'],
@@ -758,46 +741,23 @@ const EXTRA_SKILLS = [
   ['accordion', 'arts', 'Music', 'Accordion', 'accordion', 'Song', 'full playthroughs'],
   ['djing', 'arts', 'Music', 'DJing', 'compact-disc', 'Mix', 'versions'],
   ['songwriting', 'arts', 'Music', 'Songwriting', 'musical-notes', 'Song', 'drafts'],
-  ['musictheory', 'arts', 'Music', 'Music Theory', 'musical-score', 'Topic', 'studied'],
-  ['grilling', 'arts', 'Culinary', 'Grilling & BBQ', 'barbecue', 'Dish', 'times made'],
-  ['pastry', 'arts', 'Culinary', 'Pastry', 'cupcake', 'Recipe', 'times baked'],
-  ['coffee', 'arts', 'Culinary', 'Coffee', 'coffee-cup', 'Brew', 'times made'],
   ['mixology', 'arts', 'Culinary', 'Mixology', 'martini', 'Drink', 'times made'],
-  ['brewing', 'arts', 'Culinary', 'Homebrewing', 'beer-stein', 'Batch', 'brewed'],
-  ['fermentation', 'arts', 'Culinary', 'Fermentation', 'honey-jar', 'Batch', 'made'],
-  ['sushi', 'arts', 'Culinary', 'Sushi', 'sushis', 'Roll', 'times made'],
+  ['brewing', 'arts', 'Culinary', 'Brewing', 'beer-stein', 'Batch', 'brewed'],
   ['animation', 'arts', 'Visual Arts', 'Animation', 'film-spool', 'Scene', 'versions'],
   ['sculpture', 'arts', 'Visual Arts', 'Sculpture', 'stone-bust', 'Piece', 'made'],
-  ['digitalart', 'arts', 'Visual Arts', 'Digital Art', 'palette', 'Piece', 'made'],
-  ['watercolor', 'arts', 'Visual Arts', 'Watercolor', 'paint-bucket', 'Piece', 'made'],
-  ['comics', 'arts', 'Visual Arts', 'Comics', 'talk', 'Page', 'drawn'],
-  ['knitting', 'arts', 'Crafts', 'Knitting', 'yarn', 'Project', 'made'],
-  ['crochet', 'arts', 'Crafts', 'Crochet', 'sewing-string', 'Project', 'made'],
+  ['knitting', 'arts', 'Crafts', 'Knitting & Crochet', 'yarn', 'Project', 'made'],
   ['leatherwork', 'arts', 'Crafts', 'Leatherwork', 'leather-armor', 'Project', 'made'],
   ['jewelry', 'arts', 'Crafts', 'Jewelry Making', 'gem-necklace', 'Piece', 'made'],
   ['origami', 'arts', 'Crafts', 'Origami', 'paper-crane', 'Model', 'folded'],
-  ['candles', 'arts', 'Crafts', 'Candle Making', 'candle-light', 'Batch', 'made'],
   ['models', 'arts', 'Crafts', 'Model Building', 'brick-pile', 'Kit', 'built'],
-  ['welding', 'arts', 'Crafts', 'Welding', 'fire-bowl', 'Project', 'built'],
   ['gardening', 'arts', 'Crafts', 'Gardening', 'flower-pot', 'Plant', 'grown'],
-  ['bonsai', 'arts', 'Crafts', 'Bonsai', 'bonsai-tree', 'Tree', 'shaped'],
-  ['blogging', 'arts', 'Literary', 'Blogging', 'notebook', 'Post', 'published'],
-  ['screenwriting', 'arts', 'Literary', 'Screenwriting', 'clapperboard', 'Script', 'drafts'],
-  ['worldbuilding', 'arts', 'Literary', 'Worldbuilding', 'treasure-map', 'World', 'revisions'],
   ['translation', 'arts', 'Literary', 'Translation', 'spell-book', 'Piece', 'translated'],
-  ['gamedev', 'arts', 'Engineering', 'Game Development', 'game-console', 'Game', 'shipped'],
-  ['webdev', 'arts', 'Engineering', 'Web Development', 'computing', 'Site', 'shipped'],
-  ['datascience', 'arts', 'Engineering', 'Data Science', 'histogram', 'Analysis', 'done'],
-  ['printing3d', 'arts', 'Engineering', '3D Printing', '3d-hammer', 'Print', 'made'],
   ['mechanical', 'arts', 'Engineering', 'Mechanical Engineering', 'gear-hammer', 'Project', 'built'],
-  ['drones', 'arts', 'Engineering', 'Drones', 'delivery-drone', 'Flight', 'flown'],
-  ['cars', 'arts', 'Engineering', 'Car Restoration', 'car-wheel', 'Repair', 'done'],
 
   ['parties', 'exp', 'People', 'Parties', 'party-popper', 'Event', 'attended'],
   ['spanish', 'exp', 'World', 'Spanish', 'world', 'Lesson', 'completed'],
   ['french', 'exp', 'World', 'French', 'globe', 'Lesson', 'completed'],
   ['camping', 'exp', 'World', 'Camping', 'backpack', 'Trip', 'taken'],
-  ['roadtrips', 'exp', 'World', 'Road Trips', 'compass', 'Trip', 'taken'],
   ['boardgames', 'exp', 'Leisure', 'Board Games', 'dice-six-faces-six', 'Game', 'played'],
   ['chess', 'exp', 'Leisure', 'Chess', 'chess-knight', 'Opening', 'games'],
   ['concerts', 'exp', 'Leisure', 'Concerts', 'ticket', 'Show', 'attended'],
@@ -815,27 +775,19 @@ const EXTRA_SKILLS = [
   ['russian', 'exp', 'World', 'Russian', 'world', 'Lesson', 'completed'],
   ['asl', 'exp', 'World', 'Sign Language', 'hand', 'Lesson', 'completed'],
   ['museums', 'exp', 'World', 'Museums', 'greek-temple', 'Museum', 'visited'],
-  ['backpacking', 'exp', 'World', 'Backpacking', 'backpack', 'Trip', 'taken'],
-  ['nationalparks', 'exp', 'World', 'National Parks', 'pine-tree', 'Park', 'visited'],
   ['podcasts', 'exp', 'Leisure', 'Podcasts', 'pocket-radio', 'Show', 'episodes'],
-  ['anime', 'exp', 'Leisure', 'Anime', 'ninja-head', 'Series', 'watched'],
   ['manga', 'exp', 'Leisure', 'Comics & Manga', 'book-cover', 'Series', 'volumes'],
   ['ttrpg', 'exp', 'Leisure', 'Tabletop RPGs', 'dice-twenty-faces-twenty', 'Campaign', 'sessions'],
   ['cardgames', 'exp', 'Leisure', 'Card Games', 'poker-hand', 'Game', 'played'],
   ['puzzles', 'exp', 'Leisure', 'Puzzles', 'puzzle', 'Puzzle', 'solved'],
-  ['speedcubing', 'exp', 'Leisure', 'Speedcubing', 'cube', 'Solve', 'attempts'],
   ['magic', 'exp', 'Leisure', 'Magic Tricks', 'top-hat', 'Trick', 'performances'],
-  ['karaoke', 'exp', 'Leisure', 'Karaoke', 'microphone', 'Song', 'sung'],
-  ['escaperooms', 'exp', 'Leisure', 'Escape Rooms', 'key', 'Room', 'escaped'],
   ['birdwatching', 'exp', 'Nature', 'Birdwatching', 'binoculars', 'Species', 'sightings'],
   ['stargazing', 'exp', 'Nature', 'Stargazing', 'telescope', 'Object', 'sightings'],
   ['fishing', 'exp', 'Nature', 'Fishing', 'fishing-pole', 'Species', 'caught'],
   ['foraging', 'exp', 'Nature', 'Foraging', 'mushroom-gills', 'Find', 'found'],
   ['philosophy', 'exp', 'Mind', 'Philosophy', 'think', 'Book', 'reads'],
   ['math', 'exp', 'Mind', 'Mathematics', 'abacus', 'Topic', 'studied'],
-  ['courses', 'exp', 'Mind', 'Online Courses', 'graduate-cap', 'Course', 'completed'],
   ['investing', 'exp', 'Mind', 'Investing', 'coins', 'Book', 'reads'],
-  ['memory', 'exp', 'Mind', 'Memory Training', 'brainstorm', 'Session', 'done'],
 ];
 const LIBRARY = [...DEFAULT_SKILLS, ...EXTRA_SKILLS];
 
@@ -1661,12 +1613,19 @@ function renderLibrary() {
     const list = all.filter(d => c.id === 'all' || d.cat === c.id);
     return `<button data-libcat="${c.id}" class="small ${libCat === c.id ? 'on' : ''}" ${c.color ? `style="--c:${c.color}"` : ''}>${c.icon ? icon(c.icon) + ' ' : ''}${c.name} <span class="muted">${list.filter(d => have.has(d.id)).length}/${list.length}</span></button>`;
   }).join('');
-  const html = CATS.filter(c => libCat === 'all' || libCat === c.id).map(c => {
-    const items = all.filter(d => d.cat === c.id && match(d)).sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
+  const az = state.ui.libSort === 'az';
+  $('#libTabs').insertAdjacentHTML('beforeend', `<button id="libSort" class="small ghost" title="Change sort order">Sort: ${az ? 'A–Z' : 'Group'}</button>`);
+  const byName = (a, b) => a.name.localeCompare(b.name);
+  // Group sort: one section per category, grouped. A–Z on "All": a single alphabetical list across categories.
+  const sections = az && libCat === 'all'
+    ? [{ items: all.filter(match).sort(byName) }]
+    : CATS.filter(c => libCat === 'all' || libCat === c.id).map(c => ({ c,
+        items: all.filter(d => d.cat === c.id && match(d)).sort(az ? byName : (a, b) => a.group.localeCompare(b.group) || byName(a, b)) }));
+  const html = sections.map(({ c, items }) => {
     if (!items.length) return '';
-    return `<div class="lib-sec" style="--c:${c.color}"><h3>${icon(c.icon)} ${c.name}</h3><div class="lib-grid">${items.map(d => {
+    return `<div class="lib-sec" ${c ? `style="--c:${c.color}"` : ''}>${c ? `<h3>${icon(c.icon)} ${c.name}</h3>` : ''}<div class="lib-grid">${items.map(d => {
       const added = have.has(d.id);
-      return `<button class="lib-item ${added ? 'added' : ''} " data-lib="${esc(d.id)}" ${added ? 'disabled' : ''}>
+      return `<button class="lib-item ${added ? 'added' : ''}" style="--c:${cat(d.cat).color}" data-lib="${esc(d.id)}" ${added ? 'disabled' : ''}>
         <span class="li-ic">${icon(d.icon) || icon('sparkles')}</span><span class="li-nm">${esc(d.name)}<small>${esc(d.group)}</small></span>
         <span class="li-act">${added ? '✓ Added' : '+ Add'}</span></button>`;
     }).join('')}</div></div>`;
@@ -1684,7 +1643,10 @@ function addFromLibrary(id) {
   save(); render(); renderLibrary();
 }
 $('#libSearch').addEventListener('input', renderLibrary);
-$('#libTabs').addEventListener('click', e => { const b = e.target.closest('[data-libcat]'); if (b) { libCat = b.dataset.libcat; renderLibrary(); } });
+$('#libTabs').addEventListener('click', e => {
+  if (e.target.closest('#libSort')) { state.ui.libSort = state.ui.libSort === 'az' ? 'group' : 'az'; save(); return renderLibrary(); }
+  const b = e.target.closest('[data-libcat]'); if (b) { libCat = b.dataset.libcat; renderLibrary(); }
+});
 $('#libList').addEventListener('click', e => { const b = e.target.closest('[data-lib]'); if (b) addFromLibrary(b.dataset.lib); });
 $('#libCustom').addEventListener('click', () => { $('#libDlg').close(); openSkill(null, libCat === 'all' ? CATS[0].id : libCat); });
 
