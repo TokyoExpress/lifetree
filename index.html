@@ -81,7 +81,7 @@
 
   /* Trees board */
   .board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
-  .cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .cats { display: grid; grid-template-columns: var(--cols, repeat(3, minmax(0, 1fr))); gap: 14px; }
   .detail { position: sticky; top: 96px; max-height: calc(100vh - 116px); overflow: auto; }
   @media (max-width: 1100px) { .board { grid-template-columns: 1fr; } .detail { position: static; max-height: none; } }
   @media (max-width: 720px) { .cats { grid-template-columns: 1fr; } }
@@ -93,7 +93,8 @@
   }
   .cat .wm { position: absolute; top: -30px; right: -40px; font-size: 200px; opacity: .06; color: var(--c); pointer-events: none; }
   .cat-head { text-align: center; position: relative; }
-  .cat-head .ic { font-size: 34px; line-height: 1; color: var(--c); filter: drop-shadow(0 0 8px var(--c)); }
+  .cat-head .title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .cat-head .ic { font-size: 28px; line-height: 1; color: var(--c); filter: drop-shadow(0 0 8px var(--c)); display: flex; }
   .cat-head .name { font-family: Silkscreen, monospace; font-size: 24px; color: var(--c); text-shadow: 0 0 12px var(--c); }
   .cat-head .lv { font-size: 12px; color: var(--muted); }
   .cat-head button { position: absolute; top: -6px; right: 0; }
@@ -476,8 +477,8 @@
 </dialog>
 
 <div id="dropLine"></div>
-<script src="icons.js?v=1790355170"></script>
-<script type="module" src="sync.js?v=1790355170"></script>
+<script src="icons.js?v=1790355247"></script>
+<script type="module" src="sync.js?v=1790355247"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -739,13 +740,16 @@ function snapshotGroupOrder() {
   state.groupOrder = Object.fromEntries(CATS.map(c => [c.id, groupNames(c.id)]));
 }
 
+// Columns get widths proportional to their trees, so every tree draws at the same scale
+// and wide trees (more branches) take the space narrow ones don't need.
+const TREE = { COL: 88, PAD: 14 };
+const treeWidth = catId => Math.max(2, groupNames(catId).length) * TREE.COL + TREE.PAD * 2;
+
 function catSvg(c, bySkill) {
   const skills = state.skills.filter(s => s.cat === c.id);
   const groups = groupNames(c.id).map(name => ({ name, skills: skills.filter(s => (s.group || 'Other') === name) }));
-  // Every column uses the width of the widest tree so nodes are the same size everywhere.
-  const widest = Math.max(3, ...CATS.map(x => groupNames(x.id).length));
-  const COL = 88, PAD = 14, W = widest * COL + PAD * 2;
-  const RX = W / 2, RY = 44, RR = 30, BUS = 104, GY = 128, GD = 13, SY = 214, SP = 104, SR = 25;
+  const { COL, PAD } = TREE, W = treeWidth(c.id);
+  const RX = W / 2, RY = 40, RR = 30, BUS = 96, GY = 118, GD = 13, SY = 200, SP = 104, SR = 27;
   const deepest = Math.max(1, ...groups.map(g => g.skills.length));
   const H = SY + (deepest - 1) * SP + 72;
   const off = (W - groups.length * COL) / 2;
@@ -776,7 +780,7 @@ function catSvg(c, bySkill) {
         <circle class="sel-ring" cx="${gx}" cy="${cy}" r="${SR + 9}"/>
         <circle class="bg" cx="${gx}" cy="${cy}" r="${SR}"/>
         ${on ? `<circle class="ring" cx="${gx}" cy="${cy}" r="${SR + 4}" transform="rotate(-90 ${gx} ${cy})" stroke-dasharray="${C * pr.pct} ${C}"/>` : ''}
-        <svg class="nic" x="${gx - 14}" y="${cy - 14}" width="28" height="28" viewBox="0 0 512 512">${ICONS[s.icon] || ''}</svg>
+        <svg class="nic" x="${gx - 16}" y="${cy - 16}" width="32" height="32" viewBox="0 0 512 512">${ICONS[s.icon] || ''}</svg>
         ${pr.L > 0 ? `<rect class="badge-bg" x="${gx + 10}" y="${cy + 12}" width="22" height="15" rx="3"/><text class="badge" x="${gx + 21}" y="${cy + 20}">${pr.L}</text>` : ''}
         ${lines(name, gx, cy + SR + 18, 12, 'label')}
         <text class="sub halo" x="${gx}" y="${cy + SR + 18 + name.length * 12}">${on ? fmtH(h) : '—'}</text>
@@ -833,11 +837,11 @@ function renderTrees() {
   $('#editToggle').classList.toggle('on', editMode);
   if (!cat(state.ui.mcat)) state.ui.mcat = CATS[0].id;
   $('#catSwitch').innerHTML = CATS.map(c => `<button data-mcat="${c.id}" class="${c.id === state.ui.mcat ? 'on' : ''}" style="--c:${c.color}">${icon(c.icon)} ${c.name}</button>`).join('');
+  $('#cats').style.setProperty('--cols', CATS.map(c => `minmax(0, ${treeWidth(c.id)}fr)`).join(' '));
   $('#cats').innerHTML = CATS.map(c => `<div class="cat ${c.id === state.ui.mcat ? 'mshow' : ''}" style="--c:${c.color}">
       <div class="wm">${icon(c.icon)}</div>
       <div class="cat-head">
-        <div class="ic">${icon(c.icon)}</div>
-        <div class="name">${c.name}</div>
+        <div class="title-row"><span class="ic">${icon(c.icon)}</span><span class="name">${c.name}</span></div>
         <div class="lv">${fmtH(byCat[c.id] || 0)} logged</div>
         <button class="small ghost" data-newskill="${c.id}" title="Add a skill">+</button>
         ${editMode ? `<button class="small ghost newgroup" data-newgroup="${c.id}">+ branch</button>` : ''}
