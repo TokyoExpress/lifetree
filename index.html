@@ -8,6 +8,8 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>Life Skill Tree</title>
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
@@ -59,9 +61,13 @@
     background: linear-gradient(135deg, var(--accent), #3ad0ff); color: #0b0d17; font-size: 30px; }
   .who .name { font-family: Silkscreen, monospace; font-size: 16px; }
   .who .title { color: var(--gold); font-size: 12px; }
-  .who .cls { outline: none; border-bottom: 1px dashed transparent; cursor: text; }
-  .who .cls:hover, .who .cls:focus { border-bottom-color: var(--gold); }
-  .who .cls:empty::before { content: 'click to set class'; color: var(--muted); }
+  .who .cls { position: relative; display: inline-block; min-width: 1ch; padding: 0 5px; border: 1px dashed transparent;
+    border-radius: 4px; outline: none; cursor: text; caret-color: var(--gold); }
+  .who .cls:hover { border-color: var(--gold); }
+  .who .cls:empty { border-color: var(--muted); }
+  .who .cls:empty::before { content: '+ set class'; color: var(--muted); }
+  .who .cls:focus { min-width: 13ch; border: 1px solid var(--gold); background: var(--panel-2); }
+  .who .cls:focus:empty::before { content: 'type a class…'; position: absolute; left: 6px; opacity: .6; pointer-events: none; }
   .xpbar { width: 180px; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
   .xpbar > div { height: 100%; background: linear-gradient(90deg, var(--accent), #3ad0ff); }
   .attrs { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -233,10 +239,11 @@
   .day-right { flex: 1; min-width: 0; }
   .day-meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12px; margin-bottom: 5px; }
   .day-meta #dayCats { display: flex; gap: 12px; font-family: Silkscreen, monospace; font-size: 11px; }
-  .daybar2 { position: relative; height: 16px; border-radius: 5px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); }
+  .goalbar { position: relative; height: 14px; border-radius: 5px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); display: flex; margin-bottom: 6px; }
+  .goalbar div { height: 100%; flex: none; box-shadow: 0 0 8px var(--c); background: var(--c); }
+  .goalbar.done { border-color: var(--gold); box-shadow: 0 0 8px color-mix(in srgb, var(--gold) 50%, transparent); }
+  .daybar2 { position: relative; height: 8px; border-radius: 5px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); }
   .daybar2 .elapsed { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(135deg, #2a3150 0 6px, #232944 6px 12px); }
-  .daybar2 .segs { position: absolute; inset: 0; display: flex; }
-  .daybar2 .segs div { height: 100%; flex: none; box-shadow: 0 0 8px var(--c); background: var(--c); }
   .daybar2 .now { position: absolute; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
   .daycard #editToggle { flex: none; align-self: flex-start; }
   .day-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 3px; }
@@ -409,7 +416,7 @@
   <div class="avatar" id="avatar"></div>
   <div class="who">
     <div class="name" id="pname"></div>
-    <div class="title">Lv <span id="plv"></span> · <span class="cls" id="pclass" contenteditable="plaintext-only" spellcheck="false" title="Click to edit your class"></span> · <span id="ptotal"></span></div>
+    <div class="title">Lv <span id="plv"></span> · <span class="cls" id="pclass" contenteditable="plaintext-only" spellcheck="false" title="Click and type your class (Enter to save, Esc to cancel)"></span> · <span id="ptotal"></span></div>
     <div class="xpbar"><div id="pxp"></div></div>
   </div>
   <div class="attrs" id="attrs"></div>
@@ -433,7 +440,8 @@
       </div>
       <div class="day-right">
         <div class="day-meta"><span id="dayLogged"></span><span id="dayCats"></span></div>
-        <div class="daybar2"><div class="elapsed" id="dayElapsed"></div><div class="segs" id="daySegs"></div><div class="now" id="dayNow"></div></div>
+        <div class="goalbar" id="goalBar"></div>
+        <div class="daybar2" title="Time of day, 8am → midnight"><div class="elapsed" id="dayElapsed"></div><div class="now" id="dayNow"></div></div>
         <div class="day-ticks"><span>8a</span><span>12p</span><span>4p</span><span>8p</span><span>12a</span></div>
       </div>
       <button class="small" id="editToggle"></button>
@@ -629,8 +637,8 @@
     <div class="ob-alt" id="obAlt"></div>
   </div>
 </div>
-<script src="icons.js?v=1790356927"></script>
-<script type="module" src="sync.js?v=1790356927"></script>
+<script src="icons.js?v=1790377180"></script>
+<script type="module" src="sync.js?v=1790377180"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -1026,7 +1034,8 @@ function catSvg(c, bySkill) {
 }
 
 // ---------- Day strip ----------
-const DAY_START = 8; // the bar covers 8am → midnight
+const DAY_START = 8; // the time bar covers 8am → midnight
+const DAY_GOAL = 8; // hours; the goal bar fills toward this
 function renderDay() {
   const today = localDate(), byCat = {};
   for (const l of state.logs) {
@@ -1034,10 +1043,12 @@ function renderDay() {
     if (sk) byCat[sk.cat] = (byCat[sk.cat] || 0) + l.minutes / 60;
   }
   const total = CATS.reduce((a, c) => a + (byCat[c.id] || 0), 0);
-  $('#dayLogged').innerHTML = `<b style="color:var(--text)">${fmtH(total)}</b> <span class="muted">logged today</span>`;
+  $('#dayLogged').innerHTML = `<b style="color:var(--text)">${fmtH(total)}</b> <span class="muted">/ ${DAY_GOAL}h logged today</span>`;
   $('#dayCats').innerHTML = CATS.filter(c => byCat[c.id]).map(c => `<span style="color:${c.color}">${c.name} ${fmtH(byCat[c.id])}</span>`).join('');
-  $('#daySegs').innerHTML = CATS.filter(c => byCat[c.id]).map(c =>
-    `<div style="--c:${c.color};width:${Math.min(100, byCat[c.id] / (24 - DAY_START) * 100)}%" title="${c.name}: ${fmtH(byCat[c.id])}"></div>`).join('');
+  $('#goalBar').classList.toggle('done', total >= DAY_GOAL);
+  $('#goalBar').title = `${fmtH(total)} of ${DAY_GOAL}h`;
+  $('#goalBar').innerHTML = CATS.filter(c => byCat[c.id]).map(c =>
+    `<div style="--c:${c.color};width:${byCat[c.id] / Math.max(total, DAY_GOAL) * 100}%" title="${c.name}: ${fmtH(byCat[c.id])}"></div>`).join('');
   tickDay();
 }
 function tickDay() {
@@ -1531,7 +1542,10 @@ $('#tabs').addEventListener('click', e => {
   state.ui.view = b.dataset.v; save(); render();
 });
 $('#logBtn').addEventListener('click', () => openLog());
-$('#pclass').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+$('#pclass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') { e.target.textContent = state.profile.class || ''; e.target.blur(); }
+});
 $('#pclass').addEventListener('blur', e => { state.profile.class = e.target.textContent.trim().slice(0, 40); save(); renderHeader(); });
 
 // ---------- Skill library ----------
