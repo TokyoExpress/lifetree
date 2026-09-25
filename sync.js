@@ -1,7 +1,6 @@
 // Cloud features through Firebase (Google sign-in + Firestore):
 //  - users/{uid}: your private save, mirrored from localStorage and pulled on other devices
 //  - profiles/{uid}: opt-in public leaderboard entry (name, avatar, hours per skill)
-//  - library/{skillId}: custom skills people shared to the community library
 // Inert until firebase-config.js has a config.
 // Load the config with the same ?v= as this file so a new deploy never pairs with a cached config.
 const { firebaseConfig } = await import('./firebase-config.js' + new URL(import.meta.url).search);
@@ -55,11 +54,6 @@ async function start() {
       const q = F.query(F.collection(db, 'profiles'), F.orderBy(field, 'desc'), F.limit(n));
       return (await F.getDocs(q)).docs.map(d => ({ uid: d.id, ...d.data() }));
     },
-    async library() {
-      return (await F.getDocs(F.collection(db, 'library'))).docs.map(d => d.data());
-    },
-    shareSkill: def => F.setDoc(F.doc(db, 'library', def.id), { ...def, by: me.uid, byName: lt.profileName(), createdAt: Date.now() }),
-    unshareSkill: id => F.deleteDoc(F.doc(db, 'library', id)),
   };
 
   window.cloudPush = () => { clearTimeout(timer); timer = setTimeout(push, 1200); };
