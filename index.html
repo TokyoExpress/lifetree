@@ -329,13 +329,13 @@
   <section class="view on" id="v-trees">
     <div class="card daycard" id="dayCard">
       <div class="day-left">
-        <div class="day-lbl">Until midnight</div>
+        <div class="day-lbl" id="dayLbl">Until midnight</div>
         <div class="countdown" id="countdown"></div>
       </div>
       <div class="day-right">
         <div class="day-meta"><span id="dayLogged"></span><span id="dayCats"></span></div>
         <div class="daybar2"><div class="elapsed" id="dayElapsed"></div><div class="segs" id="daySegs"></div><div class="now" id="dayNow"></div></div>
-        <div class="day-ticks"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div>
+        <div class="day-ticks"><span>8a</span><span>12p</span><span>4p</span><span>8p</span><span>12a</span></div>
       </div>
       <button class="small" id="editToggle"></button>
     </div>
@@ -744,6 +744,7 @@ function catSvg(c, bySkill) {
 }
 
 // ---------- Day strip ----------
+const DAY_START = 8; // the bar covers 8am → midnight
 function renderDay() {
   const today = localDate(), byCat = {};
   for (const l of state.logs) {
@@ -754,14 +755,17 @@ function renderDay() {
   $('#dayLogged').innerHTML = `<b style="color:var(--text)">${fmtH(total)}</b> <span class="muted">logged today</span>`;
   $('#dayCats').innerHTML = CATS.filter(c => byCat[c.id]).map(c => `<span style="color:${c.color}">${c.name} ${fmtH(byCat[c.id])}</span>`).join('');
   $('#daySegs').innerHTML = CATS.filter(c => byCat[c.id]).map(c =>
-    `<div style="--c:${c.color};width:${Math.min(100, byCat[c.id] / 24 * 100)}%" title="${c.name}: ${fmtH(byCat[c.id])}"></div>`).join('');
+    `<div style="--c:${c.color};width:${Math.min(100, byCat[c.id] / (24 - DAY_START) * 100)}%" title="${c.name}: ${fmtH(byCat[c.id])}"></div>`).join('');
   tickDay();
 }
 function tickDay() {
-  const now = new Date(), start = new Date(now); start.setHours(0, 0, 0, 0);
-  const end = new Date(start); end.setDate(end.getDate() + 1);
-  const pct = (now - start) / (end - start) * 100, left = Math.floor((end - now) / 1000);
+  const now = new Date(), start = new Date(now); start.setHours(DAY_START, 0, 0, 0);
+  const end = new Date(now); end.setHours(24, 0, 0, 0);
+  const early = now < start; // before 8am: count down to the start of the day instead
+  const pct = early ? 0 : (now - start) / (end - start) * 100;
+  const left = Math.floor(((early ? start : end) - now) / 1000);
   const pad = n => String(n).padStart(2, '0');
+  $('#dayLbl').textContent = early ? 'Day starts in' : 'Until midnight';
   $('#countdown').textContent = `${pad(Math.floor(left / 3600))}:${pad(Math.floor(left / 60) % 60)}:${pad(left % 60)}`;
   $('#dayElapsed').style.width = pct + '%';
   $('#dayNow').style.left = pct + '%';
