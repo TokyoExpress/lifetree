@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0d17" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Life Skill Tree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0b0d17;
+    --panel: #141828;
+    --panel-2: #1b2036;
+    --line: #262c45;
+    --text: #e8ebff;
+    --muted: #8a90b5;
+    --accent: #8b7bff;
+    --gold: #ffd166;
+    --danger: #ff5c7a;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'Chakra Petch', system-ui, sans-serif; font-size: 14px;
+    background-image: radial-gradient(circle at 20% 0%, #1a1740 0%, transparent 45%),
+                      radial-gradient(circle at 90% 100%, #0f2a3a 0%, transparent 40%);
+    min-height: 100vh;
+  }
+  h1, h2, h3, .pixel { font-family: Silkscreen, monospace; font-weight: 400; letter-spacing: .5px; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+  h3 { font-size: 13px; margin: 0 0 8px; color: var(--muted); }
+  button, input, select, textarea {
+    font: inherit; color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  }
+  button { cursor: pointer; transition: .15s; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0b0d17; font-weight: 700; }
+  button.primary:hover { filter: brightness(1.1); }
+  button.ghost { background: transparent; }
+  button.small { padding: 4px 8px; font-size: 12px; }
+  label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .muted { color: var(--muted); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+
+  /* Header */
+  header {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    padding: 14px 20px; border-bottom: 1px solid var(--line); background: rgba(11,13,23,.75);
+    backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10;
+  }
+  .avatar { width: 46px; height: 46px; border-radius: 10px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), #3ad0ff); color: #0b0d17; font-size: 30px; }
+  .who .name { font-family: Silkscreen, monospace; font-size: 16px; }
+  .who .title { color: var(--gold); font-size: 12px; }
+  .who .cls { outline: none; border-bottom: 1px dashed transparent; cursor: text; }
+  .who .cls:hover, .who .cls:focus { border-bottom-color: var(--gold); }
+  .who .cls:empty::before { content: 'click to set class'; color: var(--muted); }
+  .xpbar { width: 180px; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .xpbar > div { height: 100%; background: linear-gradient(90deg, var(--accent), #3ad0ff); }
+  .attrs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .attr { padding: 4px 8px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--line);
+    font-family: Silkscreen, monospace; font-size: 12px; }
+  nav.tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+  nav.tabs button { background: transparent; border-color: transparent; color: var(--muted);
+    font-family: Silkscreen, monospace; font-size: 13px; letter-spacing: .5px; text-transform: uppercase; }
+  nav.tabs button:hover { color: var(--text); border-color: transparent; }
+  nav.tabs button.on { color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent);
+    border-color: color-mix(in srgb, var(--gold) 45%, transparent); text-shadow: 0 0 10px color-mix(in srgb, var(--gold) 60%, transparent); }
+  nav.tabs button.on .gi { filter: drop-shadow(0 0 6px var(--gold)); }
+
+  main { padding: 20px; max-width: 1600px; margin: 0 auto; }
+  .view { display: none; }
+  .view.on { display: block; }
+
+  /* Trees board */
+  .board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  .cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .detail { position: sticky; top: 96px; max-height: calc(100vh - 116px); overflow: auto; }
+  @media (max-width: 1100px) { .board { grid-template-columns: 1fr; } .detail { position: static; max-height: none; } }
+  @media (max-width: 720px) { .cats { grid-template-columns: 1fr; } }
+  .cat {
+    position: relative; overflow: hidden; border-radius: 14px; padding: 16px 8px 10px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--c) 30%, #0b0d17) 0%, color-mix(in srgb, var(--c) 10%, #0b0d17) 50%, #0b0d17 100%);
+    border: 2px solid color-mix(in srgb, var(--c) 55%, transparent);
+    box-shadow: inset 0 0 40px color-mix(in srgb, var(--c) 18%, transparent), 0 0 28px -10px var(--c);
+  }
+  .cat .wm { position: absolute; top: -30px; right: -40px; font-size: 200px; opacity: .06; color: var(--c); pointer-events: none; }
+  .cat-head { text-align: center; position: relative; }
+  .cat-head .ic { font-size: 34px; line-height: 1; color: var(--c); filter: drop-shadow(0 0 8px var(--c)); }
+  .cat-head .name { font-family: Silkscreen, monospace; font-size: 24px; color: var(--c); text-shadow: 0 0 12px var(--c); }
+  .cat-head .lv { font-size: 12px; color: var(--muted); }
+  .cat-head button { position: absolute; top: -6px; right: 0; }
+  .cat > svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+  .edge { fill: none; stroke: rgba(255,255,255,.16); stroke-width: 2; }
+  .edge.on { stroke: var(--c); filter: drop-shadow(0 0 3px var(--c)); }
+  svg text { fill: var(--text); text-anchor: middle; }
+  .halo { paint-order: stroke; stroke: #0d1020; stroke-width: 4px; stroke-linejoin: round; }
+  .root .track { fill: #0d1020; stroke: rgba(255,255,255,.12); stroke-width: 4; }
+  .root .ring { fill: none; stroke: var(--c); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 6px var(--c)); }
+  .root .num { font-family: Silkscreen, monospace; font-size: 22px; dominant-baseline: central; }
+  .root .lbl { font-size: 8px; fill: var(--muted); letter-spacing: 1.5px; }
+  .group .dia { fill: #0d1020; stroke: var(--c); stroke-width: 2; }
+  .group.on .dia { fill: color-mix(in srgb, var(--c) 45%, #0d1020); filter: drop-shadow(0 0 5px var(--c)); }
+  .group text { font-size: 9.5px; font-weight: 800; fill: var(--c); letter-spacing: .8px; }
+  .node { cursor: pointer; }
+  .node .bg { fill: #0d1020; stroke: rgba(255,255,255,.2); stroke-width: 2; transition: .15s; }
+  .node.on .bg { fill: color-mix(in srgb, var(--c) 28%, #0d1020); stroke: var(--c); }
+  .node:hover .bg { stroke: #fff; }
+  .node .ring { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 4px var(--c)); }
+  .node .nic { color: #fff; }
+  .node:not(.on) .nic { color: var(--muted); opacity: .55; }
+  .node .emoji { font-size: 22px; dominant-baseline: central; }
+  .node:not(.on) .emoji { filter: grayscale(1); opacity: .45; }
+  .node .label { font-size: 11px; font-weight: 600; }
+  .node:not(.on) .label { fill: var(--muted); }
+  .node .sub { font-size: 10px; fill: var(--muted); }
+  .node .badge-bg { fill: var(--c); }
+  .node .badge { font-size: 10px; font-weight: 800; fill: #0b0d17; dominant-baseline: central; }
+  .tree-bar { display: flex; justify-content: flex-end; margin: -6px 0 10px; }
+  #editToggle.on { background: var(--gold); border-color: var(--gold); color: #0b0d17; font-weight: 700; }
+  .cats.editing .node, .cats.editing .group { cursor: grab; }
+  .cats.editing svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+  .cats.editing .node .bg { stroke-dasharray: 4 3; stroke: var(--c); }
+  .cats.editing .cat { outline: 1px dashed color-mix(in srgb, var(--c) 60%, transparent); outline-offset: -8px; }
+  .node.dragging, .group.dragging { opacity: .25; }
+  .cat-head button.newgroup { right: auto; left: 0; }
+  .gdel { cursor: pointer; }
+  .gdel circle { fill: #0d1020; stroke: var(--danger); }
+  .gdel text { fill: var(--danger); font-size: 9px; dominant-baseline: central; }
+  .gdel:hover circle { fill: var(--danger); } .gdel:hover text { fill: #0b0d17; }
+  .gcol { fill: transparent; }
+  .gcol.hover { fill: color-mix(in srgb, var(--c) 16%, transparent); }
+  .drag-ghost { position: fixed; z-index: 200; pointer-events: none; transform: translate(-50%, -50%);
+    display: grid; place-items: center; color: #fff; background: var(--panel-2); border: 2px solid var(--gold);
+    box-shadow: 0 0 18px -2px var(--gold); }
+  .drag-ghost.skill { width: 52px; height: 52px; border-radius: 50%; font-size: 28px; }
+  .drag-ghost.grp { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--gold); }
+  #dropLine { position: fixed; z-index: 199; pointer-events: none; display: none; background: var(--gold); box-shadow: 0 0 10px var(--gold); border-radius: 2px; }
+  .node .sel-ring { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 6 5; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .node.sel .sel-ring { opacity: .9; animation: spin 6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .detail .kicker { color: var(--c); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+  .detail .dname { font-family: 'Chakra Petch', sans-serif; font-size: 26px; font-weight: 600; margin: 4px 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .detail .big { font-size: 40px; }
+  .gi { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex: none; }
+  .detail .dname .gi { color: var(--c); }
+  .log-item .gi { color: var(--muted); }
+  nav.tabs .gi { margin-right: 4px; }
+  .picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; max-height: 168px; overflow-y: auto;
+    padding: 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; }
+  .picker button { padding: 6px; font-size: 20px; display: grid; place-items: center; background: transparent; border-color: transparent; color: var(--muted); }
+  .picker button:hover { color: var(--text); }
+  .picker button.on { color: var(--accent); border-color: var(--accent); background: #8b7bff22; }
+  .progress { height: 10px; background: var(--panel-2); border-radius: 5px; overflow: hidden; margin: 6px 0; }
+  .progress > div { height: 100%; background: var(--c, var(--accent)); }
+  .stat { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .stat:last-child { border: 0; }
+  .quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+  .items { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--panel-2); border-radius: 8px; }
+  .item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .ct { font-family: Silkscreen, monospace; color: var(--c); min-width: 44px; text-align: right; }
+  .item button { padding: 3px 8px; }
+  .item-add { display: flex; gap: 6px; }
+  .item-add input { flex: 1; min-width: 0; }
+  .rec { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+  .rec-top { display: flex; align-items: center; gap: 8px; }
+  .rec-top .nm { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rec-top .pr { font-family: Silkscreen, monospace; color: var(--c); font-size: 16px; white-space: nowrap; }
+  .rec-top button { padding: 3px 8px; }
+  .rec-sub { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); margin: 2px 0 6px; }
+  .rec-sub svg { flex: none; }
+  .rec-log, .rec-add { display: flex; gap: 6px; }
+  .rec-log input, .rec-add input { flex: 1; min-width: 0; }
+  .rec-add { margin-top: 8px; }
+  .tag { color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+
+  /* Log */
+  .log-list { display: flex; flex-direction: column; gap: 6px; }
+  .log-item { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; }
+  .log-item .when { color: var(--muted); font-size: 12px; min-width: 84px; }
+  .log-item .amt { font-family: Silkscreen, monospace; color: var(--gold); margin-left: auto; white-space: nowrap; }
+  .log-item button { padding: 2px 8px; }
+  .heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 12px); gap: 3px; overflow-x: auto; }
+  .heat div { width: 12px; height: 12px; border-radius: 2px; background: var(--panel-2); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px dashed var(--line); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+
+  /* Life */
+  .clock { font-family: Silkscreen, monospace; font-size: clamp(28px, 6vw, 56px); color: var(--gold); }
+  .bigstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+  .bigstats .card { padding: 12px; }
+  .bigstats .v { font-family: Silkscreen, monospace; font-size: 20px; }
+  .elapsed { font-family: Silkscreen, monospace; font-size: clamp(14px, 2.2vw, 20px); color: var(--muted); margin-top: 2px; }
+  .bigstats.three { grid-template-columns: repeat(3, 1fr); }
+  .lg-row { display: grid; grid-template-columns: 110px 1fr 90px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .lg-row:last-child { border: 0; }
+  .lg-row .progress { margin: 4px 0 0; }
+  .progress.stack { display: flex; }
+  .progress.stack > div { flex: none; }
+  .lg-cats { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; margin-top: 5px; font-family: Silkscreen, monospace; }
+  .lg-cats .muted { font-family: 'Chakra Petch', sans-serif; }
+  .lg-row .pct { font-family: Silkscreen, monospace; color: var(--gold); text-align: right; font-size: 16px; }
+  .weeks { display: grid; grid-auto-flow: column; gap: 2px; margin-top: 12px; }
+  .weeks div { aspect-ratio: 1; border-radius: 1px; background: var(--panel-2); }
+  .weeks .past { background: var(--accent); opacity: .75; }
+  .weeks .now { background: var(--gold); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+
+  /* Dialog */
+  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; width: min(440px, 92vw); }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog .field { margin-bottom: 12px; }
+  dialog input:not([type=checkbox]), dialog select, dialog textarea { width: 100%; }
+  .check { display: flex; gap: 8px; align-items: center; color: var(--text); font-size: 14px; }
+  /* Day strip above the trees */
+  .daycard { position: relative; display: flex; gap: 20px; align-items: center; padding: 12px 16px; margin-bottom: 12px; }
+  .day-lbl { font-family: Silkscreen, monospace; font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .countdown { font-family: Silkscreen, monospace; font-size: 28px; color: var(--gold); text-shadow: 0 0 12px color-mix(in srgb, var(--gold) 50%, transparent); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .day-right { flex: 1; min-width: 0; }
+  .day-meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12px; margin-bottom: 5px; }
+  .day-meta #dayCats { display: flex; gap: 12px; font-family: Silkscreen, monospace; font-size: 11px; }
+  .daybar2 { position: relative; height: 16px; border-radius: 5px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); }
+  .daybar2 .elapsed { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(135deg, #2a3150 0 6px, #232944 6px 12px); }
+  .daybar2 .segs { position: absolute; inset: 0; display: flex; }
+  .daybar2 .segs div { height: 100%; flex: none; box-shadow: 0 0 8px var(--c); background: var(--c); }
+  .daybar2 .now { position: absolute; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .daycard #editToggle { flex: none; align-self: flex-start; }
+  .day-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* Mobile-only / desktop-only bits */
+  .m-only, .m-flex { display: none; }
+  .sheet-backdrop { display: none; }
+  .tree-bar { align-items: center; gap: 8px; }
+  .cat-switch { flex: 1; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+  .cat-switch button { flex: 1; border: 0; background: transparent; font-family: Silkscreen, monospace; font-size: 13px; color: var(--muted); padding: 8px 4px; display: flex; gap: 6px; align-items: center; justify-content: center; }
+  .cat-switch button.on { background: color-mix(in srgb, var(--c) 22%, var(--panel-2)); color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+
+  @media (max-width: 760px) {
+    .m-only { display: inline; }
+    .m-flex { display: flex; }
+    .d-only { display: none; }
+    body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+    input, select, textarea { font-size: 16px; } /* stops iOS zooming into fields */
+    /* no backdrop-filter here: it would trap the fixed bottom bar and log button inside the header */
+    header { padding: calc(10px + env(safe-area-inset-top)) 14px 10px; gap: 10px 12px; backdrop-filter: none; background: rgba(11,13,23,.97); }
+    .avatar { width: 40px; height: 40px; font-size: 26px; }
+    .xpbar { width: 150px; }
+    .attrs { order: 5; width: 100%; }
+    nav.tabs {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      background: rgba(11,13,23,.95); border-top: 1px solid var(--line); backdrop-filter: blur(10px);
+    }
+    nav.tabs button { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; padding: 7px 0; }
+    nav.tabs button .gi { font-size: 22px; margin: 0; }
+    #logBtn {
+      position: fixed; right: 16px; bottom: calc(78px + env(safe-area-inset-bottom)); z-index: 31;
+      width: 58px; height: 58px; border-radius: 50%; padding: 0; font-size: 30px; line-height: 1;
+      box-shadow: 0 6px 24px -4px var(--accent);
+    }
+    body.sheet-open #logBtn { display: none; }
+    main { padding: 12px; }
+    .tree-bar { margin: 0 0 12px; }
+    .daycard { flex-direction: column; align-items: stretch; gap: 8px; }
+    .day-left { display: flex; gap: 10px; align-items: baseline; padding-right: 118px; }
+    .countdown { font-size: 24px; }
+    .daycard #editToggle { position: absolute; top: 10px; right: 12px; }
+    .cats { grid-template-columns: 1fr; }
+    .cats .cat:not(.mshow) { display: none; }
+    .cat .wm { font-size: 160px; }
+    /* Skill details become a bottom sheet */
+    .detail {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 40;
+      max-height: 86vh; border-radius: 18px 18px 0 0; border-bottom: 0;
+      padding: 22px 16px calc(18px + env(safe-area-inset-bottom));
+      transform: translateY(105%); transition: transform .25s ease;
+      box-shadow: 0 -10px 40px rgba(0,0,0,.5);
+    }
+    .detail::before { content: ''; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--line); }
+    body.sheet-open .detail { transform: none; }
+    body.sheet-open .sheet-backdrop { display: block; position: fixed; inset: 0; z-index: 39; background: rgba(0,0,0,.55); }
+    body.sheet-open { overflow: hidden; }
+    .quick button { padding: 12px 4px; }
+    .bigstats.three .v { font-size: 15px; }
+    .bigstats.three .card { padding: 10px; }
+    .lg-row { grid-template-columns: 1fr auto; row-gap: 4px; }
+    .lg-row > div { grid-column: 1 / -1; order: 3; }
+    dialog { width: 94vw; max-height: 88vh; }
+    .picker { max-height: 200px; }
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="avatar" id="avatar"></div>
+  <div class="who">
+    <div class="name" id="pname"></div>
+    <div class="title">Lv <span id="plv"></span> · <span class="cls" id="pclass" contenteditable="plaintext-only" spellcheck="false" title="Click to edit your class"></span> · <span id="ptotal"></span></div>
+    <div class="xpbar"><div id="pxp"></div></div>
+  </div>
+  <div class="attrs" id="attrs"></div>
+  <nav class="tabs" id="tabs">
+    <button data-v="trees" class="on" data-ic="oak">Trees</button>
+    <button data-v="log" data-ic="scroll-unfurled">Log</button>
+    <button data-v="life" data-ic="hourglass">Life</button>
+    <button data-v="settings" data-ic="cog" title="Settings"><span class="m-only">Settings</span></button>
+  </nav>
+  <button class="primary" id="logBtn" aria-label="Log time"><span class="d-only">+ Log time</span><span class="m-only">+</span></button>
+</header>
+
+<main>
+  <!-- TREES -->
+  <section class="view on" id="v-trees">
+    <div class="card daycard" id="dayCard">
+      <div class="day-left">
+        <div class="day-lbl">Until midnight</div>
+        <div class="countdown" id="countdown"></div>
+      </div>
+      <div class="day-right">
+        <div class="day-meta"><span id="dayLogged"></span><span id="dayCats"></span></div>
+        <div class="daybar2"><div class="elapsed" id="dayElapsed"></div><div class="segs" id="daySegs"></div><div class="now" id="dayNow"></div></div>
+        <div class="day-ticks"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div>
+      </div>
+      <button class="small" id="editToggle"></button>
+    </div>
+    <div class="tree-bar m-flex"><div class="cat-switch m-flex" id="catSwitch"></div></div>
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="board">
+      <div class="cats" id="cats"></div>
+      <aside class="card detail" id="detail"></aside>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section class="view" id="v-log">
+    <div class="grid2">
+      <div class="card">
+        <h2>Activity</h2>
+        <div class="heat" id="heat"></div>
+        <p class="muted" id="heatNote"></p>
+        <h3 style="margin-top:16px">By category</h3>
+        <div id="catTotals"></div>
+      </div>
+      <div class="card">
+        <h2>History</h2>
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIFE -->
+  <section class="view" id="v-life">
+    <div class="card">
+      <div class="row" style="margin-bottom:12px">
+        <div><label>Birthday</label><input type="date" id="birth" /></div>
+        <div><label>Life expectancy (years)</label><input type="number" id="lifespan" min="1" max="130" style="width:100px" /></div>
+        <div><label>Sleep (hrs/day)</label><input type="number" id="sleep" min="0" max="23" step="0.5" style="width:100px" /></div>
+        <div><label>Work / school (hrs/day)</label><input type="number" id="busy" min="0" max="23" step="0.5" style="width:100px" /></div>
+      </div>
+      <div id="lifeBody"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>Time logged</h2>
+      <div id="loggedBody"></div>
+    </div>
+  </section>
+
+
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings">
+    <div class="grid2">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <h2>Profile</h2>
+          <div><label>Name</label><input type="text" id="setName" style="width:100%" /></div>
+          <div style="margin-top:12px"><label>Avatar</label><div class="picker" id="avatarPicker"></div></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h2>Cloud sync</h2>
+          <p class="muted" id="syncStatus">Loading…</p>
+          <div class="row" id="syncActions"></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h2>Starting hours</h2>
+          <p class="muted">Each skill can have starting hours: your estimate of time spent before you started logging. They count toward levels and your all-time total, but not toward past day, week, month or year, the heatmap or your streak. Set them with "Edit skill".</p>
+          <button id="convertBtn">Turn all current time logs into starting hours</button>
+          <p class="muted" id="convertNote" style="margin-bottom:0"></p>
+        </div>
+        <div class="card">
+          <h2>Save data</h2>
+          <p class="muted">Everything is saved in this browser. Export a backup now and then.</p>
+          <div class="row">
+            <button id="exportBtn">⬇ Export JSON</button>
+            <button id="importBtn">⬆ Import JSON</button>
+            <input type="file" id="importFile" accept=".json" hidden />
+            <button id="resetBtn" style="margin-left:auto;border-color:var(--danger);color:var(--danger)">Reset everything</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Level cutoffs</h2>
+        <p class="muted">1 hour logged = 1 XP. A skill reaches level <b>L</b> at <b>2.5 × L²</b> hours, so each level takes a bit longer than the last.
+          This curve is made up. It was picked so the first levels come fast and ~10,000 hours (the "10,000-hour rule") lands at Lv 63.
+          Category levels use 5 × L² and your character level uses 10 × L², since they add up hours from many skills.</p>
+        <table id="levelTable"></table>
+        <p class="muted" style="font-size:12px;margin-top:16px">Icons by Lorc, Delapouite and contributors at <a href="https://game-icons.net" style="color:var(--accent)">game-icons.net</a>, CC BY 3.0.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Log dialog -->
+<dialog id="logDlg">
+  <form method="dialog" id="logForm">
+    <h2>Log time</h2>
+    <div class="field"><label>Skill</label><select id="lSkill" required></select></div>
+    <div class="field row" style="flex-wrap:nowrap">
+      <div style="flex:1"><label>Hours</label><input type="number" id="lH" min="0" step="1" value="1" /></div>
+      <div style="flex:1"><label>Minutes</label><input type="number" id="lM" min="0" max="59" step="5" value="0" /></div>
+    </div>
+    <div class="field"><label>Date</label><input type="date" id="lDate" /></div>
+    <div class="field"><label>Note (optional)</label><input type="text" id="lNote" placeholder="What did you work on?" /></div>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="ghost" data-close>Cancel</button>
+      <button class="primary" value="ok">Log it</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Skill dialog -->
+<dialog id="groupDlg">
+  <form method="dialog" id="groupForm">
+    <h2>New branch</h2>
+    <div class="field"><label>Name</label><input type="text" id="gName" required placeholder="e.g. Water Sports" /></div>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="ghost" data-close>Cancel</button>
+      <button class="primary" value="ok">Add</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="skillDlg">
+  <form method="dialog" id="skillForm">
+    <h2 id="skillDlgTitle">New skill</h2>
+    <div class="field"><label>Name</label><input type="text" id="sName" required /></div>
+    <div class="field"><label>Icon</label><div class="picker" id="sPicker"></div></div>
+    <div class="field"><label>Category</label><select id="sCat"></select></div>
+    <div class="field"><label>Group (pick one or type a new one)</label><input type="text" id="sGroup" list="groupList" placeholder="e.g. Team Sports" /><datalist id="groupList"></datalist></div>
+    <div class="field"><label>Starting hours (your estimate before you started logging)</label><input type="number" id="sBase" min="0" step="any" placeholder="0" /></div>
+    <div class="field"><label class="check"><input type="checkbox" id="sItems" /> Track things with a counter (songs, dishes…)</label></div>
+    <div class="field row" id="sItemFields" style="flex-wrap:nowrap">
+      <div style="flex:1"><label>What you track</label><input type="text" id="sNoun" placeholder="Song" /></div>
+      <div style="flex:1"><label>What the counter counts</label><input type="text" id="sCount" placeholder="full playthroughs" /></div>
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="ghost" data-close>Cancel</button>
+      <button class="primary" value="ok">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="dropLine"></div>
+<script src="icons.js"></script>
+<script type="module" src="sync.js"></script>
+<script>
+// ---------- Data ----------
+const CATS = [
+  { id: 'strdex', name: 'PHYS',  icon: 'biceps',  color: '#ff8a5c', items: false },
+  { id: 'arts',   name: 'CRAFT', icon: 'anvil',   color: '#ff6ad5', items: true, noun: 'Project', count: 'times' },
+  { id: 'exp',    name: 'EXP',   icon: 'compass', color: '#3fd9b5', items: true, noun: 'Entry', count: 'times' },
+];
+
+// [id, cat, group, name, icon, noun, countWord]
+const DEFAULT_SKILLS = [
+  ['basketball', 'strdex', 'Team Sports', 'Basketball', 'basketball-ball'],
+  ['volleyball', 'strdex', 'Team Sports', 'Volleyball', 'volleyball-ball'],
+  ['pickleball', 'strdex', 'Racket Sports', 'Pickleball', 'ping-pong-bat'],
+  ['badminton', 'strdex', 'Racket Sports', 'Badminton', 'shuttlecock'],
+  ['calisthenics', 'strdex', 'Strength', 'Calisthenics', 'muscle-up'],
+  ['weightlifting', 'strdex', 'Strength', 'Weightlifting', 'weight-lifting-up'],
+  ['climbing', 'strdex', 'Mountain', 'Climbing', 'mountain-climbing'],
+  ['snowboarding', 'strdex', 'Mountain', 'Snowboarding', 'snowboard'],
+  ['hiking', 'strdex', 'Outdoor', 'Hiking', 'hiking'],
+  ['biking', 'strdex', 'Outdoor', 'Biking', 'cycling'],
+
+  ['piano', 'arts', 'Music', 'Piano', 'piano-keys', 'Song', 'full playthroughs'],
+  ['guitar', 'arts', 'Music', 'Guitar', 'guitar', 'Song', 'full playthroughs'],
+  ['bass', 'arts', 'Music', 'Bass', 'guitar-bass-head', 'Song', 'full playthroughs'],
+  ['trumpet', 'arts', 'Music', 'Trumpet', 'trumpet', 'Song', 'full playthroughs'],
+  ['drums', 'arts', 'Music', 'Drums', 'drum', 'Song', 'full playthroughs'],
+  ['cooking', 'arts', 'Culinary', 'Cooking', 'cooking-pot', 'Dish', 'times made'],
+  ['drawing', 'arts', 'Visual Arts', 'Drawing', 'pencil', 'Piece', 'sessions'],
+  ['graphicdesign', 'arts', 'Visual Arts', 'Graphic Design', 'pencil-ruler', 'Project', 'iterations'],
+  ['woodworking', 'arts', 'Crafts', 'Woodworking', 'hand-saw', 'Project', 'built'],
+  ['writing', 'arts', 'Literary', 'Writing', 'quill-ink', 'Piece', 'drafts'],
+
+  ['social', 'exp', 'People', 'Social', 'three-friends', 'Person', 'hangouts'],
+  ['travel', 'exp', 'World', 'Travel', 'airplane-departure', 'Place', 'visits'],
+  ['entertainment', 'exp', 'Leisure', 'Entertainment', 'popcorn', 'Title', 'times'],
+];
+
+const KEY = 'lifetree.v2';
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+function makeSkill([id, cat, group, name, icon, noun, count]) {
+  const c = CATS.find(x => x.id === cat);
+  return { id, cat, group, name, icon, items: c.items, noun: noun || c.noun || '', count: count || c.count || '' };
+}
+function freshState() {
+  return {
+    profile: { name: 'Player One', birth: '', lifespan: 80, avatar: 'wizard-staff', sleep: 8, busy: 8 },
+    version: 4,
+    skills: DEFAULT_SKILLS.map(makeSkill),
+    logs: [],    // time: { id, skill, minutes, date, note, ts }
+    items: [],   // counters: { id, skill, name, ts }
+    plays: [],   // counter ticks: { id, item, date, ts }
+    ui: { view: 'trees', sel: null, mcat: 'strdex' },
+  };
+}
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || freshState(); } catch { state = freshState(); }
+if (!['trees', 'log', 'life', 'settings'].includes(state.ui.view)) state.ui.view = 'trees';
+// Bring older saves up to the current shape.
+function migrate() {
+  { // emoji → game icons for existing saves
+    const defaults = Object.fromEntries(DEFAULT_SKILLS.map(d => [d[0], d[4]]));
+    for (const s of state.skills) if (!ICONS[s.icon]) s.icon = defaults[s.id] || 'sparkles';
+    if (!ICONS[state.profile.avatar]) state.profile.avatar = 'wizard-staff';
+  }
+  if ((state.version || 0) < 3) {
+    // v3: STRDEX → PHYS (+ hiking, biking), MUSIC folded into CRAFT as a "Music" branch, new EXP tree
+    for (const s of state.skills) if (s.cat === 'music') { s.cat = 'arts'; s.group = 'Music'; }
+    const have = new Set(state.skills.map(s => s.id));
+    for (const d of DEFAULT_SKILLS) if (['hiking', 'biking', 'social', 'travel', 'entertainment'].includes(d[0]) && !have.has(d[0])) state.skills.push(makeSkill(d));
+    state.version = 3;
+  }
+  if ((state.version || 0) < 4) {
+    // v4: branches no longer vanish when empty; bring back default ones that did
+    snapshotGroupOrder();
+    for (const c of CATS) {
+      const defaults = [...new Set(DEFAULT_SKILLS.filter(d => d[1] === c.id).map(d => d[2]))];
+      const list = state.groupOrder[c.id];
+      defaults.forEach((g, i) => { if (!list.includes(g)) list.splice(Math.min(i, list.length), 0, g); });
+    }
+    state.version = 4;
+  }
+  state.profile.sleep ??= 8;
+  state.profile.busy ??= 8;
+  state.records ??= [];   // PR trackers: { id, skill, name, unit, dir: 'higher' | 'lower' }
+  state.attempts ??= [];  // PR entries: { id, record, value, date, ts }
+}
+migrate();
+// ---------- Saving & cloud sync ----------
+// The synced payload is everything except per-device UI state and sync bookkeeping.
+const payload = () => { const { ui, lastSync, updatedAt, ...data } = state; return data; };
+let lastPayload = JSON.stringify(payload());
+function save() {
+  snapshotGroupOrder();
+  const p = JSON.stringify(payload());
+  if (p !== lastPayload) { lastPayload = p; state.updatedAt = Date.now(); window.cloudPush?.(); }
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+}
+// Hooks used by sync.js (loaded as a module; stays inert until Firebase is configured).
+window.lifetree = {
+  payload,
+  updatedAt: () => state.updatedAt || 0,
+  lastSync: () => state.lastSync || 0,
+  hasData: () => state.logs.length + state.plays.length + state.attempts.length + state.items.length > 0 || state.skills.some(s => s.base),
+  markSynced(at) { state.lastSync = at; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} },
+  applyRemote(data, at) {
+    state = { ...freshState(), ...data, ui: state.ui, version: data.version || 0 };
+    migrate();
+    state.updatedAt = at; state.lastSync = at;
+    lastPayload = JSON.stringify(payload());
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+    render();
+  },
+  status(info) { syncInfo = { ...syncInfo, ...info }; if (state.ui.view === 'settings') renderSync(); },
+};
+let syncInfo = { configured: false, user: null, msg: '' };
+function renderSync() {
+  const i = syncInfo;
+  $('#syncStatus').textContent = !i.configured
+    ? 'Not set up yet. Add your Firebase config to firebase-config.js to turn on sync.'
+    : i.user ? `Signed in as ${i.user}. ${i.msg || 'Your data syncs across devices.'}`
+    : 'Sign in with Google to back up your data and sync it across devices.';
+  $('#syncActions').innerHTML = !i.configured ? ''
+    : i.user ? '<button id="syncOut">Sign out</button>'
+    : '<button class="primary" id="syncIn">Sign in with Google</button>';
+}
+
+// ---------- Helpers ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const localDate = (d = new Date()) => new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const cat = id => CATS.find(c => c.id === id);
+const skill = id => state.skills.find(s => s.id === id);
+const item = id => state.items.find(i => i.id === id);
+const fmtH = h => h < 1 ? `${Math.round(h * 60)}m` : `${+h.toFixed(1)}h`;
+const num = n => Math.round(n).toLocaleString();
+const plural = w => /(s|sh|ch|x|z)$/i.test(w) ? w + 'es' : w + 's';
+
+const SKILL_K = 2.5, CAT_K = 5, CHAR_K = 10;
+const lvl = (h, k) => Math.floor(Math.sqrt(h / k));
+const hoursFor = (L, k) => k * L * L;
+function prog(h, k) {
+  const L = lvl(h, k), a = hoursFor(L, k), b = hoursFor(L + 1, k);
+  return { L, pct: (h - a) / (b - a), toNext: b - h };
+}
+const TITLES = [[0, 'Unawakened'], [1, 'Novice'], [5, 'Apprentice'], [10, 'Adept'], [20, 'Expert'], [40, 'Master'], [63, 'Grandmaster']];
+const titleFor = L => [...TITLES].reverse().find(([t]) => L >= t)[1];
+const nextTitle = L => TITLES.find(([t]) => t > L);
+
+function totals() {
+  const bySkill = {}, byCat = {};
+  let all = 0;
+  for (const l of state.logs) bySkill[l.skill] = (bySkill[l.skill] || 0) + l.minutes / 60;
+  for (const s of state.skills) if (s.base) bySkill[s.id] = (bySkill[s.id] || 0) + s.base;
+  for (const s of state.skills) {
+    const h = bySkill[s.id] || 0;
+    byCat[s.cat] = (byCat[s.cat] || 0) + h;
+    all += h;
+  }
+  return { bySkill, byCat, all };
+}
+const playCount = itemId => state.plays.filter(p => p.item === itemId).length;
+const skillItems = skillId => state.items.filter(i => i.skill === skillId);
+
+// ---------- Actions ----------
+function addLog(skillId, minutes, date, note) {
+  if (!skillId || !minutes || minutes <= 0) return;
+  state.logs.push({ id: uid(), skill: skillId, minutes, date: date || localDate(), note: note || '', ts: Date.now() });
+  save(); render();
+}
+
+// ---------- Header ----------
+function renderHeader() {
+  const { byCat, all } = totals();
+  const p = prog(all, CHAR_K);
+  $('#avatar').innerHTML = icon(state.profile.avatar);
+  $('#pname').textContent = state.profile.name;
+  $('#plv').textContent = p.L;
+  $('#ptotal').textContent = `${fmtH(all)} total`;
+  if (document.activeElement !== $('#pclass')) $('#pclass').textContent = state.profile.class || '';
+  $('#pxp').style.width = (p.pct * 100) + '%';
+  $('#attrs').innerHTML = CATS.map(c =>
+    `<span class="attr" style="color:${c.color}" title="${fmtH(byCat[c.id] || 0)}">${c.name} ${lvl(byCat[c.id] || 0, CAT_K)}</span>`).join('');
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === state.ui.view));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + state.ui.view));
+}
+
+// ---------- Trees ----------
+// Each category is a vertical column: level ring at the top, a diamond per group,
+// and that group's skills stacked underneath.
+function wrap(name, max = 11) {
+  const words = name.split(' ');
+  if (name.length <= max || words.length < 2) return [name];
+  let best = [name], diff = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+    if (Math.abs(a.length - b.length) < diff) { diff = Math.abs(a.length - b.length); best = [a, b]; }
+  }
+  return best;
+}
+const lines = (arr, x, y, dy, cls) => arr.map((t, i) => `<text class="${cls} halo" x="${x}" y="${y + i * dy}">${esc(t)}</text>`).join('');
+
+// Branch order per category: saved order first, then any new branches in the order they appear.
+function groupNames(catId) {
+  const present = [...new Set(state.skills.filter(s => s.cat === catId).map(s => s.group || 'Other'))];
+  const saved = state.groupOrder?.[catId] || []; // kept even when empty
+  return [...saved, ...present.filter(g => !saved.includes(g))];
+}
+function snapshotGroupOrder() {
+  state.groupOrder = Object.fromEntries(CATS.map(c => [c.id, groupNames(c.id)]));
+}
+
+function catSvg(c, bySkill) {
+  const skills = state.skills.filter(s => s.cat === c.id);
+  const groups = groupNames(c.id).map(name => ({ name, skills: skills.filter(s => (s.group || 'Other') === name) }));
+  // Every column uses the width of the widest tree so nodes are the same size everywhere.
+  const widest = Math.max(3, ...CATS.map(x => groupNames(x.id).length));
+  const COL = 88, PAD = 14, W = widest * COL + PAD * 2;
+  const RX = W / 2, RY = 44, RR = 30, BUS = 104, GY = 128, GD = 13, SY = 214, SP = 104, SR = 25;
+  const deepest = Math.max(1, ...groups.map(g => g.skills.length));
+  const H = SY + (deepest - 1) * SP + 72;
+  const off = (W - groups.length * COL) / 2;
+  const catH = skills.reduce((a, s) => a + (bySkill[s.id] || 0), 0), cp = prog(catH, CAT_K), RC = 2 * Math.PI * RR;
+
+  let edgesOff = '', edgesOn = '', nodes = '';
+  const edge = (d, on) => { const e = `<path class="edge ${on ? 'on' : ''}" d="${d}"/>`; on ? edgesOn += e : edgesOff += e; };
+
+  groups.forEach((g, gi) => {
+    const gx = off + COL * (gi + .5);
+    const gOn = g.skills.some(s => bySkill[s.id]);
+    edge(`M${RX},${RY + RR + 2} V${BUS} H${gx} V${GY - GD}`, gOn);
+    if (editMode && !g.skills.length) nodes += `<g class="gdel" data-delgroup="${esc(g.name)}" data-cat="${c.id}" title="Remove empty branch">
+      <circle cx="${gx + 20}" cy="${GY - 14}" r="8"/><text x="${gx + 20}" y="${GY - 14}">✕</text></g>`;
+    if (editMode) edgesOff += `<rect class="gcol" data-dropgroup="${esc(g.name)}" data-cat="${c.id}" x="${gx - COL / 2}" y="${GY - 22}" width="${COL}" height="${H - GY + 22}"/>`;
+    nodes += `<g class="group ${gOn ? 'on' : ''}" data-group="${esc(g.name)}" data-cat="${c.id}">
+      <rect x="${gx - COL / 2 + 4}" y="${GY - 18}" width="${COL - 8}" height="68" fill="transparent"/>
+      <rect class="dia" x="${gx - GD * .72}" y="${GY - GD * .72}" width="${GD * 1.44}" height="${GD * 1.44}" transform="rotate(45 ${gx} ${GY})"/>
+      ${lines(wrap(g.name.toUpperCase(), 10), gx, GY + 28, 11, '')}</g>`;
+    let prevY = GY + GD;
+    g.skills.forEach((s, si) => {
+      const cy = SY + si * SP, h = bySkill[s.id] || 0, on = h > 0, pr = prog(h, SKILL_K), C = 2 * Math.PI * (SR + 4);
+      edge(`M${gx},${prevY} V${cy - SR - 4}`, on);
+      prevY = cy + SR + 4;
+      const name = wrap(s.name);
+      nodes += `<g class="node ${on ? 'on' : ''} ${state.ui.sel === s.id ? 'sel' : ''}" data-skill="${s.id}">
+        <rect x="${gx - COL / 2}" y="${cy - SR - 8}" width="${COL}" height="${SP - 8}" fill="transparent"/>
+        <circle class="sel-ring" cx="${gx}" cy="${cy}" r="${SR + 9}"/>
+        <circle class="bg" cx="${gx}" cy="${cy}" r="${SR}"/>
+        ${on ? `<circle class="ring" cx="${gx}" cy="${cy}" r="${SR + 4}" transform="rotate(-90 ${gx} ${cy})" stroke-dasharray="${C * pr.pct} ${C}"/>` : ''}
+        <svg class="nic" x="${gx - 14}" y="${cy - 14}" width="28" height="28" viewBox="0 0 512 512">${ICONS[s.icon] || ''}</svg>
+        ${pr.L > 0 ? `<rect class="badge-bg" x="${gx + 10}" y="${cy + 12}" width="22" height="15" rx="3"/><text class="badge" x="${gx + 21}" y="${cy + 20}">${pr.L}</text>` : ''}
+        ${lines(name, gx, cy + SR + 18, 12, 'label')}
+        <text class="sub halo" x="${gx}" y="${cy + SR + 18 + name.length * 12}">${on ? fmtH(h) : '—'}</text>
+      </g>`;
+    });
+  });
+  nodes += `<g class="root">
+    <circle class="track" cx="${RX}" cy="${RY}" r="${RR}"/>
+    <circle class="ring" cx="${RX}" cy="${RY}" r="${RR}" transform="rotate(-90 ${RX} ${RY})" stroke-dasharray="${RC * cp.pct} ${RC}"/>
+    <text class="lbl" x="${RX}" y="${RY - 13}">LV</text>
+    <text class="num" x="${RX}" y="${RY + 5}">${cp.L}</text></g>`;
+  if (!skills.length) nodes += `<text class="sub" x="${RX}" y="${BUS + 20}" style="fill:var(--muted)">No skills yet</text>`;
+  return `<svg viewBox="0 0 ${W} ${skills.length ? H : BUS + 40}" style="--c:${c.color}">${edgesOff}${edgesOn}${nodes}</svg>`;
+}
+
+// ---------- Day strip ----------
+function renderDay() {
+  const today = localDate(), byCat = {};
+  for (const l of state.logs) {
+    const sk = l.date === today && skill(l.skill);
+    if (sk) byCat[sk.cat] = (byCat[sk.cat] || 0) + l.minutes / 60;
+  }
+  const total = CATS.reduce((a, c) => a + (byCat[c.id] || 0), 0);
+  $('#dayLogged').innerHTML = `<b style="color:var(--text)">${fmtH(total)}</b> <span class="muted">logged today</span>`;
+  $('#dayCats').innerHTML = CATS.filter(c => byCat[c.id]).map(c => `<span style="color:${c.color}">${c.name} ${fmtH(byCat[c.id])}</span>`).join('');
+  $('#daySegs').innerHTML = CATS.filter(c => byCat[c.id]).map(c =>
+    `<div style="--c:${c.color};width:${Math.min(100, byCat[c.id] / 24 * 100)}%" title="${c.name}: ${fmtH(byCat[c.id])}"></div>`).join('');
+  tickDay();
+}
+function tickDay() {
+  const now = new Date(), start = new Date(now); start.setHours(0, 0, 0, 0);
+  const end = new Date(start); end.setDate(end.getDate() + 1);
+  const pct = (now - start) / (end - start) * 100, left = Math.floor((end - now) / 1000);
+  const pad = n => String(n).padStart(2, '0');
+  $('#countdown').textContent = `${pad(Math.floor(left / 3600))}:${pad(Math.floor(left / 60) % 60)}:${pad(left % 60)}`;
+  $('#dayElapsed').style.width = pct + '%';
+  $('#dayNow').style.left = pct + '%';
+}
+setInterval(() => {
+  if (state.ui.view !== 'trees') return;
+  if ($('#dayCard').dataset.day !== localDate()) { $('#dayCard').dataset.day = localDate(); renderDay(); } // rolled past midnight
+  else tickDay();
+}, 1000);
+
+function renderTrees() {
+  renderDay();
+  const { bySkill, byCat } = totals();
+  $('#cats').classList.toggle('editing', editMode);
+  $('#editToggle').innerHTML = editMode ? 'Done editing' : `${icon('pencil')} Edit layout`;
+  $('#editToggle').classList.toggle('on', editMode);
+  if (!cat(state.ui.mcat)) state.ui.mcat = CATS[0].id;
+  $('#catSwitch').innerHTML = CATS.map(c => `<button data-mcat="${c.id}" class="${c.id === state.ui.mcat ? 'on' : ''}" style="--c:${c.color}">${icon(c.icon)} ${c.name}</button>`).join('');
+  $('#cats').innerHTML = CATS.map(c => `<div class="cat ${c.id === state.ui.mcat ? 'mshow' : ''}" style="--c:${c.color}">
+      <div class="wm">${icon(c.icon)}</div>
+      <div class="cat-head">
+        <div class="ic">${icon(c.icon)}</div>
+        <div class="name">${c.name}</div>
+        <div class="lv">${fmtH(byCat[c.id] || 0)} logged</div>
+        <button class="small ghost" data-newskill="${c.id}" title="Add a skill">+</button>
+        ${editMode ? `<button class="small ghost newgroup" data-newgroup="${c.id}">+ branch</button>` : ''}
+      </div>
+      ${catSvg(c, bySkill)}
+    </div>`).join('');
+  renderDetail(bySkill, byCat);
+}
+
+function renderDetail(bySkill, byCat) {
+  const el = $('#detail');
+  const s = state.ui.sel && skill(state.ui.sel);
+  document.body.classList.toggle('sheet-open', !!s && state.ui.view === 'trees');
+  if (!s) {
+    el.style.removeProperty('--c');
+    el.innerHTML = `<h2>Overview</h2>
+      ${CATS.map(c => `<div class="stat"><span style="color:${c.color}">${icon(c.icon)}</span> <span>${c.name}</span><b style="color:${c.color}">Lv ${lvl(byCat[c.id] || 0, CAT_K)} · ${fmtH(byCat[c.id] || 0)}</b></div>`).join('')}
+      <p class="muted">Click a skill to log hours${state.skills.some(x => x.items) ? ' and keep count of songs, dishes and projects' : ''}.</p>`;
+    return;
+  }
+  const c = cat(s.cat);
+  el.style.setProperty('--c', c.color);
+  const h = bySkill[s.id] || 0, pr = prog(h, SKILL_K), nt = nextTitle(pr.L);
+  const recent = state.logs.filter(l => l.skill === s.id).sort((a, b) => b.ts - a.ts).slice(0, 5);
+  const avgDaily = dailyAvg(s.id);
+  const items = skillItems(s.id);
+  el.innerHTML = `
+    <div class="kicker">${c.name} › ${esc(s.group || 'Other')}</div>
+    <div class="dname">${icon(s.icon)} ${esc(s.name)}</div>
+    <div><b style="color:${c.color}">Lv ${pr.L}</b> · ${titleFor(pr.L)}</div>
+    <div class="progress"><div style="width:${pr.pct * 100}%"></div></div>
+    <div class="muted" style="font-size:12px">${fmtH(pr.toNext)} to Lv ${pr.L + 1}</div>
+    <div class="quick">
+      <button data-q="15">+15m</button><button data-q="30">+30m</button><button data-q="60">+1h</button><button data-q="custom">Other…</button>
+    </div>
+    <div class="stat"><span>Total</span><b>${fmtH(h)}${s.base ? ` <span class="muted" style="font-weight:400">(${fmtH(s.base)} starting)</span>` : ''}</b></div>
+    <div class="stat"><span>Last 30 days</span><b>${fmtH(avgDaily * 30)} (${fmtH(avgDaily)}/day)</b></div>
+    ${nt ? `<div class="stat"><span>Next title</span><b>${nt[1]} at ${num(hoursFor(nt[0], SKILL_K))}h</b></div>` : ''}
+    ${nt && avgDaily > 0 ? `<div class="stat"><span>ETA at this pace</span><b>${eta((hoursFor(nt[0], SKILL_K) - h) / avgDaily)}</b></div>` : ''}
+    ${s.items ? `
+      <h3 style="margin-top:16px">${esc(plural(s.noun || 'Item'))} <span style="float:right">${esc(s.count || 'count')}</span></h3>
+      <form class="item-add" id="itemForm"><input type="text" id="itemName" placeholder="Add a ${esc((s.noun || 'item').toLowerCase())}…" /><button>Add</button></form>
+      <div class="items">${items.map(i => `<div class="item">
+          <span class="nm" title="${esc(i.name)}">${esc(i.name)}</span>
+          <span class="ct">×${playCount(i.id)}</span>
+          <button data-minus="${i.id}" title="Undo one">−</button>
+          <button data-plus="${i.id}">+1</button>
+          <button class="ghost" data-delitem="${i.id}" title="Remove">✕</button>
+        </div>`).join('') || '<span class="muted">Nothing here yet.</span>'}</div>` : ''}
+    <h3 style="margin-top:16px">Records <span class="muted" style="float:right">best</span></h3>
+    <div class="items">${state.records.filter(r => r.skill === s.id).map(recordRow).join('') || ''}</div>
+    <form class="rec-add" id="recForm">
+      <input type="text" id="recName" placeholder="e.g. Bench press" required />
+      <input type="text" id="recUnit" placeholder="unit" style="flex:0 0 58px" />
+      <select id="recDir" title="Which way is better?"><option value="higher">↑ max</option><option value="lower">↓ min</option></select>
+      <button>Add</button>
+    </form>
+    <h3 style="margin-top:16px">Recent time</h3>
+    <div class="log-list">${recent.map(logItem).join('') || '<span class="muted">No time logged yet.</span>'}</div>
+    <div class="row" style="margin-top:14px">
+      <button class="ghost small" data-edit="${s.id}">${icon('pencil')} Edit skill</button>
+      <button class="ghost small" data-del="${s.id}">${icon('trash-can')} Delete skill</button>
+      <button class="ghost small" data-desel style="margin-left:auto">Close</button>
+    </div>`;
+}
+
+function dailyAvg(skillId) {
+  const cutoff = localDate(new Date(Date.now() - 30 * 864e5));
+  return state.logs.filter(l => l.skill === skillId && l.date > cutoff).reduce((a, l) => a + l.minutes, 0) / 60 / 30;
+}
+function eta(days) {
+  if (!isFinite(days)) return '—';
+  if (days < 1) return 'today';
+  if (days < 60) return `${Math.ceil(days)} days`;
+  if (days < 730) return `${(days / 30.4).toFixed(1)} months`;
+  return `${(days / 365.25).toFixed(1)} years`;
+}
+
+// ---------- Log view ----------
+const icon = name => ICONS[name] ? `<svg class="gi" viewBox="0 0 512 512" aria-hidden="true">${ICONS[name]}</svg>` : '';
+function pickerHtml(selected) {
+  return ICON_PICKER.map(n => `<button type="button" data-pick="${n}" title="${n.replace(/-/g, ' ')}" class="${n === selected ? 'on' : ''}">${icon(n)}</button>`).join('');
+}
+function bindPicker(el, onPick) {
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-pick]'); if (!b) return;
+    el.querySelectorAll('.on').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); onPick(b.dataset.pick);
+  });
+}
+const fmtVal = v => String(+(+v).toFixed(2));
+const attemptsFor = recId => state.attempts.filter(a => a.record === recId).sort((a, b) => a.ts - b.ts);
+const beats = (r, a, b) => r.dir === 'lower' ? a < b : a > b;
+function bestOf(r, tries) {
+  return tries.reduce((best, a) => !best || beats(r, a.value, best.value) ? a : best, null);
+}
+function isPR(a) {
+  const r = state.records.find(x => x.id === a.record);
+  return r && attemptsFor(r.id).filter(x => x.ts < a.ts).every(x => beats(r, a.value, x.value));
+}
+function sparkline(r, tries) {
+  if (tries.length < 2) return '';
+  const vs = tries.map(a => a.value), lo = Math.min(...vs), hi = Math.max(...vs), W = 90, H = 20;
+  const pts = vs.map((v, i) => `${(i / (vs.length - 1) * W).toFixed(1)},${(hi === lo ? H / 2 : H - (v - lo) / (hi - lo) * H).toFixed(1)}`).join(' ');
+  return `<svg width="${W}" height="${H + 4}" viewBox="-2 -2 ${W + 4} ${H + 4}"><polyline points="${pts}" fill="none" stroke="var(--c)" stroke-width="1.5"/></svg>`;
+}
+function recordRow(r) {
+  const tries = attemptsFor(r.id), best = bestOf(r, tries), first = tries[0], last = tries[tries.length - 1];
+  const unit = r.unit ? ' ' + esc(r.unit) : '';
+  const delta = best && first && best !== first ? best.value - first.value : 0;
+  const fresh = tries.length > 1 && last === best;
+  return `<div class="rec">
+    <div class="rec-top">
+      <span class="nm" title="${esc(r.name)}">${esc(r.name)} <span class="muted" style="font-weight:400">${r.dir === 'lower' ? '↓' : '↑'}</span></span>
+      ${fresh ? '<span class="tag">★ NEW PR</span>' : ''}
+      <span class="pr">${best ? fmtVal(best.value) + unit : '—'}</span>
+      <button class="ghost" data-delrec="${r.id}" title="Remove">✕</button>
+    </div>
+    <div class="rec-sub"><span>${best ? `PR on ${best.date} · ${tries.length} ${tries.length === 1 ? 'entry' : 'entries'}${delta ? ` · ${delta > 0 ? '+' : ''}${fmtVal(delta)}${unit} since first` : ''}` : 'No entries yet'}</span>${sparkline(r, tries)}</div>
+    <form class="rec-log" data-rec="${r.id}"><input type="number" step="any" placeholder="New entry${unit ? ' (' + esc(r.unit) + ')' : ''}" required /><button>Log</button></form>
+  </div>`;
+}
+function attemptItem(a) {
+  const r = state.records.find(x => x.id === a.record), s = r && skill(r.skill);
+  if (!s) return '';
+  return `<div class="log-item">
+    <span class="when">${a.date}</span>
+    <span>${icon(s.icon)} ${esc(s.name)} <span class="muted">· ${esc(r.name)}</span></span>
+    <span class="amt">${fmtVal(a.value)}${r.unit ? ' ' + esc(r.unit) : ''}${isPR(a) ? ' ★' : ''}</span>
+    <button class="ghost" data-delattempt="${a.id}" title="Delete">✕</button></div>`;
+}
+function logItem(l) {
+  const s = skill(l.skill);
+  if (!s) return '';
+  return `<div class="log-item">
+    <span class="when">${l.date}</span>
+    <span>${icon(s.icon)} ${esc(s.name)}${l.note ? ` <span class="muted">· ${esc(l.note)}</span>` : ''}</span>
+    <span class="amt">+${fmtH(l.minutes / 60)}</span>
+    <button class="ghost" data-dellog="${l.id}" title="Delete">✕</button></div>`;
+}
+function playItem(p) {
+  const i = item(p.item), s = i && skill(i.skill);
+  if (!s) return '';
+  return `<div class="log-item">
+    <span class="when">${p.date}</span>
+    <span>${icon(s.icon)} ${esc(s.name)} <span class="muted">· ${esc(i.name)}</span></span>
+    <span class="amt">+1</span>
+    <button class="ghost" data-delplay="${p.id}" title="Delete">✕</button></div>`;
+}
+function renderLog() {
+  const { byCat, all } = totals();
+  const byDay = {}, playDays = new Set(state.plays.map(p => p.date));
+  state.logs.forEach(l => byDay[l.date] = (byDay[l.date] || 0) + l.minutes);
+  const active = d => byDay[d] || playDays.has(d);
+  const weeks = 26, end = new Date(), start = new Date(end);
+  start.setDate(end.getDate() - end.getDay() - (weeks - 1) * 7);
+  const cells = [];
+  let streak = 0, activeDays = 0;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const k = localDate(d), m = byDay[k] || 0;
+    if (active(k)) activeDays++;
+    const a = m ? Math.min(1, .25 + m / 180) : playDays.has(k) ? .2 : 0;
+    cells.push(`<div title="${k}: ${fmtH(m / 60)}" style="${a ? `background:rgba(139,123,255,${a})` : ''}"></div>`);
+  }
+  for (let d = new Date(); streak < 3650; d.setDate(d.getDate() - 1)) {
+    if (active(localDate(d))) streak++;
+    else if (localDate(d) !== localDate()) break;
+  }
+  $('#heat').innerHTML = cells.join('');
+  $('#heatNote').innerHTML = `<span style="color:var(--gold)">${icon('fire')}</span> ${streak}-day streak · ${activeDays} active days in the last ${weeks} weeks`;
+  $('#catTotals').innerHTML = CATS.map(c => {
+    const h = byCat[c.id] || 0;
+    return `<div class="stat"><span style="color:${c.color}">${icon(c.icon)}</span> <span>${c.name}</span><b style="color:${c.color}">${fmtH(h)}</b></div>
+      <div class="progress" style="--c:${c.color}"><div style="width:${all ? h / all * 100 : 0}%"></div></div>`;
+  }).join('');
+  const entries = [...state.logs.map(l => ({ ...l, kind: 'log' })), ...state.plays.map(p => ({ ...p, kind: 'play' })), ...state.attempts.map(a => ({ ...a, kind: 'attempt' }))]
+    .sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);
+  $('#logList').innerHTML = entries.map(e => e.kind === 'log' ? logItem(e) : e.kind === 'play' ? playItem(e) : attemptItem(e)).join('')
+    || '<p class="muted">Nothing logged yet. Hit “+ Log time” to get started.</p>';
+}
+
+// ---------- Life ----------
+let lifeTimer;
+function renderLife() {
+  $('#birth').value = state.profile.birth;
+  $('#lifespan').value = state.profile.lifespan;
+  $('#sleep').value = state.profile.sleep;
+  $('#busy').value = state.profile.busy;
+  clearInterval(lifeTimer);
+  renderLogged();
+  const body = $('#lifeBody');
+  if (!state.profile.birth) { body.innerHTML = '<p class="muted">Enter your birthday to see your life clock.</p>'; return; }
+  const born = new Date(state.profile.birth + 'T00:00:00');
+  const spanMs = state.profile.lifespan * 365.25 * 864e5;
+  const totalWeeks = Math.round(state.profile.lifespan * 52);
+  const livedWeeks = Math.floor((Date.now() - born) / (7 * 864e5));
+  body.innerHTML = `
+    <h3>Time alive</h3>
+    <div class="clock" id="clock"></div>
+    <div class="elapsed" id="elapsed"></div>
+    <h3 style="margin-top:18px">Alive</h3>
+    <div class="bigstats three" id="aliveStats"></div>
+    <h3 style="margin-top:18px">Left</h3>
+    <div class="bigstats three" id="leftStats"></div>
+    <h3 style="margin-top:20px">Your life in weeks</h3>
+    <div class="weeks">${Array.from({ length: totalWeeks }, (_, i) =>
+      `<div class="${i < livedWeeks ? 'past' : i === livedWeeks ? 'now' : ''}"></div>`).join('')}</div>`;
+  layoutWeeks();
+  const awake = (24 - state.profile.sleep) / 24;
+  const cards = ms => [['Days', ms / 864e5], ['Weeks', ms / (7 * 864e5)], ['Hours awake', ms / 36e5 * awake]]
+    .map(([k, v]) => `<div class="card"><div class="muted">${k}</div><div class="v">${num(Math.floor(v))}</div></div>`).join('');
+  const tick = () => {
+    const alive = Date.now() - born, left = Math.max(0, spanMs - alive);
+    if (!$('#clock')) return;
+    $('#clock').textContent = (alive / (365.25 * 864e5)).toFixed(8) + ' yrs';
+    $('#elapsed').textContent = `${(alive / spanMs * 100).toFixed(8)}% of life elapsed`;
+    $('#aliveStats').innerHTML = cards(alive);
+    $('#leftStats').innerHTML = cards(left);
+  };
+  tick();
+  lifeTimer = setInterval(() => state.ui.view === 'life' ? tick() : clearInterval(lifeTimer), 100);
+}
+
+// Fill columns top-to-bottom while spanning the full width: pick as many ~10px columns as fit,
+// then enough rows to hold every week.
+function layoutWeeks() {
+  const el = $('.weeks');
+  if (!el || !el.clientWidth) return;
+  const cols = Math.max(1, Math.floor((el.clientWidth + 2) / 10));
+  const rows = Math.ceil(el.children.length / cols);
+  el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  el.style.gridTemplateRows = `repeat(${rows}, auto)`;
+}
+window.addEventListener('resize', layoutWeeks);
+
+function renderLogged() {
+  const today = localDate();
+  const since = days => localDate(new Date(Date.now() - (days - 1) * 864e5));
+  // Hours per category logged from a date through today
+  const loggedSince = from => {
+    const byCat = {};
+    for (const l of state.logs) {
+      const sk = skill(l.skill);
+      if (sk && l.date >= from && l.date <= today) byCat[sk.cat] = (byCat[sk.cat] || 0) + l.minutes / 60;
+    }
+    return byCat;
+  };
+  const freeH = Math.max(0, 24 - state.profile.sleep - state.profile.busy); // compare against free hours only (no sleep, work, school)
+  const aliveH = state.profile.birth ? (Date.now() - new Date(state.profile.birth + 'T00:00:00')) / 36e5 * freeH / 24 : null;
+  const rows = [
+    ['Past day', loggedSince(today), freeH],
+    ['Past week', loggedSince(since(7)), freeH * 7],
+    ['Past month', loggedSince(since(30)), freeH * 30],
+    ['Past year', loggedSince(since(365)), freeH * 365],
+    ['All time', totals().byCat, aliveH], // includes starting hours
+  ];
+  const fmtPct = p => p == null ? '—' : (p === 0 ? '0' : p.toFixed(p < 1 ? 2 : 1)) + '%';
+  $('#loggedBody').innerHTML = rows.map(([label, byCat, of]) => {
+    const h = CATS.reduce((a, c) => a + (byCat[c.id] || 0), 0);
+    const pct = of ? h / of * 100 : null;
+    return `<div class="lg-row">
+      <b>${label}</b>
+      <div><div class="muted" style="font-size:12px">${fmtH(h)} of ${of ? num(of) + 'h free' : '— (set your birthday)'}</div>
+        <div class="progress stack">${of ? CATS.map(c => `<div style="width:${Math.min(100, (byCat[c.id] || 0) / of * 100)}%;background:${c.color}"></div>`).join('') : ''}</div>
+        <div class="lg-cats">${CATS.map(c => `<span style="color:${c.color}">${c.name} <b>${of ? fmtPct((byCat[c.id] || 0) / of * 100) : '—'}</b> <span class="muted">${fmtH(byCat[c.id] || 0)}</span></span>`).join('')}</div></div>
+      <span class="pct">${fmtPct(pct)}</span>
+    </div>`;
+  }).join('');
+}
+
+function skillOptions(selected, blank) {
+  return (blank ? `<option value="">— no skill —</option>` : '') + CATS.map(c =>
+    `<optgroup label="${c.name}">${state.skills.filter(s => s.cat === c.id).map(s =>
+      `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</optgroup>`).join('');
+}
+// ---------- Settings ----------
+function renderSettings() {
+  renderSync();
+  $('#avatarPicker').innerHTML = pickerHtml(state.profile.avatar);
+  $('#setName').value = state.profile.name;
+  const levels = [1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 63];
+  $('#levelTable').innerHTML = `<tr><th>Skill level</th><th>Hours needed</th><th>Title</th></tr>` + levels.map(L => {
+    const t = TITLES.find(([x]) => x === L);
+    return `<tr><td>Lv ${L}</td><td>${num(hoursFor(L, SKILL_K))}h</td><td>${t ? `<b style="color:var(--gold)">${t[1]}</b>` : ''}</td></tr>`;
+  }).join('');
+}
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name; a.click();
+}
+
+// ---------- Render ----------
+function render() {
+  renderHeader();
+  if (state.ui.view !== 'trees') document.body.classList.remove('sheet-open');
+  const v = state.ui.view;
+  if (v === 'trees') renderTrees();
+  if (v === 'log') renderLog();
+  if (v === 'life') renderLife();
+  if (v === 'settings') renderSettings();
+}
+
+// ---------- Dialogs ----------
+function openLog(skillId) {
+  $('#lSkill').innerHTML = skillOptions(skillId || state.ui.sel);
+  $('#lDate').value = localDate();
+  $('#lNote').value = '';
+  $('#logDlg').showModal();
+}
+$('#logForm').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  addLog($('#lSkill').value, (+$('#lH').value || 0) * 60 + (+$('#lM').value || 0), $('#lDate').value, $('#lNote').value.trim());
+});
+
+let editing = null, pickedIcon = 'sparkles';
+bindPicker($('#sPicker'), n => { pickedIcon = n; });
+function openSkill(id, catId) {
+  editing = id ? skill(id) : null;
+  $('#skillDlgTitle').textContent = editing ? 'Edit skill' : 'New skill';
+  $('#sName').value = editing?.name || '';
+  pickedIcon = editing?.icon || 'sparkles';
+  $('#sPicker').innerHTML = pickerHtml(pickedIcon);
+  $('#sCat').innerHTML = CATS.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  $('#sCat').value = editing?.cat || catId || CATS[0].id;
+  $('#sGroup').value = editing?.group || '';
+  $('#sBase').value = editing?.base || '';
+  syncCatDefaults(!editing);
+  if (editing) {
+    $('#sItems').checked = editing.items;
+    $('#sNoun').value = editing.noun;
+    $('#sCount').value = editing.count;
+    $('#sItemFields').style.display = editing.items ? '' : 'none';
+  }
+  $('#skillDlg').showModal();
+}
+function syncCatDefaults(resetItems) {
+  const c = cat($('#sCat').value);
+  $('#groupList').innerHTML = groupNames(c.id).map(g => `<option value="${esc(g)}">`).join('');
+  if (resetItems) {
+    $('#sItems').checked = c.items;
+    $('#sNoun').value = c.noun || '';
+    $('#sCount').value = c.count || '';
+    $('#sItemFields').style.display = c.items ? '' : 'none';
+  }
+}
+$('#sCat').addEventListener('change', () => syncCatDefaults(!editing));
+$('#sItems').addEventListener('change', e => { $('#sItemFields').style.display = e.target.checked ? '' : 'none'; });
+$('#skillForm').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  const data = {
+    name: $('#sName').value.trim(), icon: pickedIcon, cat: $('#sCat').value,
+    group: $('#sGroup').value.trim() || 'Other', items: $('#sItems').checked, base: Math.max(0, +$('#sBase').value || 0),
+    noun: $('#sNoun').value.trim() || 'Item', count: $('#sCount').value.trim() || 'times',
+  };
+  if (!data.name) return;
+  if (editing) Object.assign(editing, data);
+  else { const id = uid(); state.skills.push({ id, ...data }); state.ui.sel = id; }
+  save(); render();
+});
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+
+// ---------- Events ----------
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.ui.view = b.dataset.v; save(); render();
+});
+$('#logBtn').addEventListener('click', () => openLog());
+$('#pclass').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+$('#pclass').addEventListener('blur', e => { state.profile.class = e.target.textContent.trim().slice(0, 40); save(); renderHeader(); });
+
+// ---------- Edit layout (drag & drop) ----------
+let newGroupCat = null;
+$('#groupForm').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'ok') return;
+  const name = $('#gName').value.trim();
+  if (!name || !newGroupCat) return;
+  snapshotGroupOrder();
+  if (!state.groupOrder[newGroupCat].includes(name)) state.groupOrder[newGroupCat].push(name);
+  save(); render();
+});
+let editMode = false, drag = null, suppressClick = false;
+$('#editToggle').addEventListener('click', () => { editMode = !editMode; renderTrees(); });
+
+$('#cats').addEventListener('pointerdown', e => {
+  if (!editMode || e.button !== 0) return;
+  const n = e.target.closest('[data-skill]'), g = !n && e.target.closest('[data-group]');
+  if (!n && !g) return;
+  drag = n ? { kind: 'skill', id: n.dataset.skill, el: n } : { kind: 'group', name: g.dataset.group, cat: g.dataset.cat, el: g };
+  Object.assign(drag, { x: e.clientX, y: e.clientY, moved: false });
+  e.preventDefault();
+});
+window.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved) {
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    drag.moved = true;
+    drag.el.classList.add('dragging');
+    const gh = drag.ghost = document.createElement('div');
+    gh.className = 'drag-ghost ' + (drag.kind === 'skill' ? 'skill' : 'grp');
+    gh.innerHTML = drag.kind === 'skill' ? icon(skill(drag.id).icon) : esc(drag.name.toUpperCase());
+    document.body.appendChild(gh);
+  }
+  drag.ghost.style.left = e.clientX + 'px';
+  drag.ghost.style.top = e.clientY + 'px';
+  drag.target = dropTarget(e);
+  showDropHint(drag.target);
+});
+window.addEventListener('pointerup', () => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  showDropHint(null);
+  if (!d.moved) return;
+  d.ghost.remove();
+  d.el.classList.remove('dragging');
+  suppressClick = true; setTimeout(() => suppressClick = false, 0);
+  if (d.target) applyDrop(d, d.target);
+});
+
+// Branch column under the pointer; below a short tree, fall back to whichever branch is straight above.
+function colAt(e, el) {
+  const direct = el.closest('[data-dropgroup]');
+  if (direct) return direct;
+  const card = el.closest('.cat');
+  if (!card) return null;
+  return [...card.querySelectorAll('.gcol')].find(r => { const b = r.getBoundingClientRect(); return e.clientX >= b.left && e.clientX <= b.right; }) || null;
+}
+const colFor = (cat, group) => [...document.querySelectorAll('.gcol')].find(r => r.dataset.cat === cat && r.dataset.dropgroup === group);
+function dropTarget(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (!el) return null;
+  if (drag.kind === 'skill') {
+    const sk = el.closest('[data-skill]');
+    if (sk && sk.dataset.skill !== drag.id) {
+      const r = sk.querySelector('.bg').getBoundingClientRect();
+      return { type: 'skill', id: sk.dataset.skill, before: e.clientY < r.top + r.height / 2, rect: r };
+    }
+    const col = colAt(e, el);
+    if (col) return { type: 'group', cat: col.dataset.cat, group: col.dataset.dropgroup, col };
+    return null;
+  }
+  const col = colAt(e, el) || colFor(el.closest('[data-group]')?.dataset.cat, el.closest('[data-group]')?.dataset.group);
+  if (!col || (col.dataset.cat === drag.cat && col.dataset.dropgroup === drag.name)) return null;
+  const r = col.getBoundingClientRect();
+  return { type: 'order', cat: col.dataset.cat, group: col.dataset.dropgroup, before: e.clientX < r.left + r.width / 2, rect: r };
+}
+function showDropHint(t) {
+  document.querySelectorAll('.gcol.hover').forEach(x => x.classList.remove('hover'));
+  const line = $('#dropLine');
+  line.style.display = 'none';
+  if (!t) return;
+  if (t.type === 'group') return t.col.classList.add('hover');
+  const r = t.rect;
+  Object.assign(line.style, t.type === 'skill'
+    ? { display: 'block', left: r.left - 14 + 'px', width: r.width + 28 + 'px', height: '3px', top: (t.before ? r.top - 10 : r.bottom + 7) + 'px' }
+    : { display: 'block', left: (t.before ? r.left : r.right) - 1 + 'px', width: '3px', top: r.top + 'px', height: r.height + 'px' });
+}
+function applyDrop(d, t) {
+  snapshotGroupOrder();
+  if (d.kind === 'skill') {
+    const s = skill(d.id), ref = t.type === 'skill' ? skill(t.id) : null;
+    state.skills.splice(state.skills.indexOf(s), 1);
+    s.cat = ref ? ref.cat : t.cat;
+    s.group = ref ? ref.group : t.group;
+    let idx;
+    if (ref) idx = state.skills.indexOf(ref) + (t.before ? 0 : 1);
+    else idx = state.skills.findLastIndex(x => x.cat === s.cat && x.group === s.group) + 1 || state.skills.length;
+    state.skills.splice(idx, 0, s);
+  } else {
+    const from = state.groupOrder[d.cat];
+    from.splice(from.indexOf(d.name), 1);
+    if (t.cat !== d.cat) state.skills.forEach(s => { if (s.cat === d.cat && (s.group || 'Other') === d.name) s.cat = t.cat; });
+    const to = state.groupOrder[t.cat].filter(g => g !== d.name);
+    to.splice(to.indexOf(t.group) + (t.before ? 0 : 1), 0, d.name);
+    state.groupOrder[t.cat] = to;
+  }
+  save(); render();
+}
+
+$('#v-trees').addEventListener('click', e => {
+  if (suppressClick) return;
+  const t = e.target;
+  const mc = t.closest('[data-mcat]');
+  if (mc) { state.ui.mcat = mc.dataset.mcat; save(); return render(); }
+  if (t.closest('#sheetBackdrop')) { state.ui.sel = null; save(); return render(); }
+  const ng = t.closest('[data-newgroup]');
+  if (ng) { newGroupCat = ng.dataset.newgroup; $('#gName').value = ''; return $('#groupDlg').showModal(); }
+  const dg = t.closest('[data-delgroup]');
+  if (dg) {
+    snapshotGroupOrder();
+    state.groupOrder[dg.dataset.cat] = state.groupOrder[dg.dataset.cat].filter(g => g !== dg.dataset.delgroup);
+    save(); return render();
+  }
+  const ns = t.closest('[data-newskill]');
+  if (ns) return openSkill(null, ns.dataset.newskill);
+  const n = t.closest('[data-skill]');
+  if (n) { state.ui.sel = state.ui.sel === n.dataset.skill ? null : n.dataset.skill; save(); return render(); }
+  if (t.closest('[data-desel]')) { state.ui.sel = null; save(); return render(); }
+  const q = t.closest('[data-q]');
+  if (q) return q.dataset.q === 'custom' ? openLog(state.ui.sel) : addLog(state.ui.sel, +q.dataset.q);
+  const plus = t.closest('[data-plus]');
+  if (plus) { state.plays.push({ id: uid(), item: plus.dataset.plus, date: localDate(), ts: Date.now() }); save(); return render(); }
+  const minus = t.closest('[data-minus]');
+  if (minus) {
+    const last = state.plays.filter(p => p.item === minus.dataset.minus).sort((a, b) => b.ts - a.ts)[0];
+    if (last) { state.plays = state.plays.filter(p => p !== last); save(); render(); }
+    return;
+  }
+  const di = t.closest('[data-delitem]');
+  if (di) {
+    const i = item(di.dataset.delitem), n = playCount(i.id);
+    if (n && !confirm(`Remove "${i.name}" and its count of ${n}?`)) return;
+    state.items = state.items.filter(x => x.id !== i.id);
+    state.plays = state.plays.filter(p => p.item !== i.id);
+    save(); return render();
+  }
+  const dr = t.closest('[data-delrec]');
+  if (dr) {
+    const r = state.records.find(x => x.id === dr.dataset.delrec), n = attemptsFor(r.id).length;
+    if (n && !confirm(`Remove "${r.name}" and its ${n} entries?`)) return;
+    state.records = state.records.filter(x => x.id !== r.id);
+    state.attempts = state.attempts.filter(a => a.record !== r.id);
+    save(); return render();
+  }
+  const ed = t.closest('[data-edit]');
+  if (ed) return openSkill(ed.dataset.edit);
+  const del = t.closest('[data-del]');
+  if (del) {
+    const s = skill(del.dataset.del);
+    const n = state.logs.filter(l => l.skill === s.id).length;
+    if (!confirm(`Delete "${s.name}"${n ? ` and its ${n} time entries` : ''}?`)) return;
+    const itemIds = new Set(skillItems(s.id).map(i => i.id));
+    state.skills = state.skills.filter(x => x.id !== s.id);
+    state.logs = state.logs.filter(l => l.skill !== s.id);
+    state.items = state.items.filter(i => !itemIds.has(i.id));
+    state.plays = state.plays.filter(p => !itemIds.has(p.item));
+    const recIds = new Set(state.records.filter(r => r.skill === s.id).map(r => r.id));
+    state.records = state.records.filter(r => !recIds.has(r.id));
+    state.attempts = state.attempts.filter(a => !recIds.has(a.record));
+    state.ui.sel = null; save(); render();
+  }
+});
+$('#v-trees').addEventListener('submit', e => {
+  const f = e.target;
+  if (f.id === 'recForm') {
+    e.preventDefault();
+    const name = $('#recName').value.trim();
+    if (!name || !state.ui.sel) return;
+    state.records.push({ id: uid(), skill: state.ui.sel, name, unit: $('#recUnit').value.trim(), dir: $('#recDir').value });
+    save(); return render();
+  }
+  if (f.classList.contains('rec-log')) {
+    e.preventDefault();
+    const v = parseFloat(f.querySelector('input').value);
+    if (!isFinite(v)) return;
+    state.attempts.push({ id: uid(), record: f.dataset.rec, value: v, date: localDate(), ts: Date.now() });
+    save(); render();
+    document.querySelector(`.rec-log[data-rec="${f.dataset.rec}"] input`)?.focus();
+    return;
+  }
+  if (f.id !== 'itemForm') return;
+  e.preventDefault();
+  const name = $('#itemName').value.trim();
+  if (!name || !state.ui.sel) return;
+  state.items.push({ id: uid(), skill: state.ui.sel, name, ts: Date.now() });
+  save(); render();
+  $('#itemName')?.focus();
+});
+document.body.addEventListener('click', e => {
+  const d = e.target.closest('[data-dellog]');
+  if (d) { state.logs = state.logs.filter(l => l.id !== d.dataset.dellog); save(); render(); }
+  const p = e.target.closest('[data-delplay]');
+  if (p) { state.plays = state.plays.filter(x => x.id !== p.dataset.delplay); save(); render(); }
+  const a = e.target.closest('[data-delattempt]');
+  if (a) { state.attempts = state.attempts.filter(x => x.id !== a.dataset.delattempt); save(); render(); }
+});
+
+$('#birth').addEventListener('change', e => { state.profile.birth = e.target.value; save(); render(); });
+$('#busy').addEventListener('change', e => { state.profile.busy = Math.min(23, Math.max(0, +e.target.value || 0)); save(); render(); });
+$('#sleep').addEventListener('change', e => { state.profile.sleep = Math.min(23, Math.max(0, +e.target.value || 0)); save(); render(); });
+$('#lifespan').addEventListener('change', e => { state.profile.lifespan = Math.min(130, Math.max(1, +e.target.value || 80)); save(); render(); });
+
+
+$('#setName').addEventListener('change', e => { state.profile.name = e.target.value.trim() || 'Player One'; save(); renderHeader(); });
+bindPicker($('#avatarPicker'), n => { state.profile.avatar = n; save(); renderHeader(); });
+$('#exportBtn').addEventListener('click', () => download(`lifetree-${localDate()}.json`, JSON.stringify(state, null, 2)));
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d.skills || !d.logs) throw 0;
+    state = { ...freshState(), ...d, version: d.version || 0 }; migrate(); save(); render();
+  } catch { alert('That file doesn\'t look like a Life Skill Tree save.'); }
+  e.target.value = '';
+});
+$('#syncActions').addEventListener('click', e => {
+  if (e.target.closest('#syncIn')) window.cloudSignIn?.();
+  if (e.target.closest('#syncOut')) window.cloudSignOut?.();
+});
+$('#convertBtn').addEventListener('click', () => {
+  const n = state.logs.length;
+  if (!n) { $('#convertNote').textContent = 'There are no time logs to convert.'; return; }
+  const h = state.logs.reduce((a, l) => a + l.minutes, 0) / 60;
+  if (!confirm(`Move all ${n} time logs (${fmtH(h)}) into starting hours? Each skill keeps its total and level, but the individual log entries are removed.`)) return;
+  for (const l of state.logs) { const s = skill(l.skill); if (s) s.base = (s.base || 0) + l.minutes / 60; }
+  state.logs = [];
+  save(); render();
+  $('#convertNote').textContent = `Done. ${fmtH(h)} moved into starting hours.`;
+});
+$('#resetBtn').addEventListener('click', () => {
+  if (confirm('Wipe all skills, logs and settings? Export a backup first if you want one.')) { state = freshState(); save(); render(); }
+});
+
+document.querySelectorAll('[data-ic]').forEach(b => b.insertAdjacentHTML('afterbegin', icon(b.dataset.ic)));
+render();
+</script>
+</body>
+</html>
