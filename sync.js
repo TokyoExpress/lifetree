@@ -1,6 +1,8 @@
-// Cloud sync through Firebase (Google sign-in + one Firestore document per user).
-// The app keeps working from localStorage; this module mirrors the save to users/{uid}
-// and pulls changes made on other devices. Inert until firebase-config.js has a config.
+// Cloud features through Firebase (Google sign-in + Firestore):
+//  - users/{uid}: your private save, mirrored from localStorage and pulled on other devices
+//  - profiles/{uid}: opt-in public leaderboard entry (name, avatar, hours per skill)
+//  - library/{skillId}: custom skills people shared to the community library
+// Inert until firebase-config.js has a config.
 // Load the config with the same ?v= as this file so a new deploy never pairs with a cached config.
 const { firebaseConfig } = await import('./firebase-config.js' + new URL(import.meta.url).search);
 
@@ -19,7 +21,7 @@ async function start() {
   const auth = A.getAuth(app);
   const db = F.getFirestore(app);
   const client = crypto.randomUUID(); // tells our own writes apart from other devices'
-  let ref = null, unsub = null, timer = null;
+  let ref = null, unsub = null, timer = null, me = null;
   lt.status({ configured: true });
 
   async function push() {
@@ -29,11 +31,36 @@ async function start() {
       await F.setDoc(ref, { data: JSON.stringify(lt.payload()), updatedAt: at, client });
       lt.markSynced(at);
       lt.status({ msg: `Last synced ${new Date().toLocaleTimeString()}.` });
+      if (lt.publicProfile()) publishProfile();
     } catch (e) {
       lt.status({ msg: `Sync failed (${e.code || e.message}). Changes are saved on this device and will sync on your next change.` });
     }
   }
   const applyCloud = d => lt.applyRemote(JSON.parse(d.data), d.updatedAt);
+
+  // Public leaderboard entry: written while opted in, deleted when you opt out.
+  async function publishProfile() {
+    if (!me) return;
+    const p = lt.publicProfile(), pref = F.doc(db, 'profiles', me.uid);
+    try { p ? await F.setDoc(pref, { ...p, updatedAt: Date.now() }) : await F.deleteDoc(pref); }
+    catch (e) { lt.status({ msg: `Leaderboard update failed (${e.code || e.message}).` }); }
+  }
+
+  window.cloud = {
+    signedIn: () => !!me,
+    uid: () => me?.uid,
+    publishProfile,
+    // Top entries for a field on profiles: 'total' or 'skills.<skillId>'
+    async leaderboard(field, n = 25) {
+      const q = F.query(F.collection(db, 'profiles'), F.orderBy(field, 'desc'), F.limit(n));
+      return (await F.getDocs(q)).docs.map(d => ({ uid: d.id, ...d.data() }));
+    },
+    async library() {
+      return (await F.getDocs(F.collection(db, 'library'))).docs.map(d => d.data());
+    },
+    shareSkill: def => F.setDoc(F.doc(db, 'library', def.id), { ...def, by: me.uid, byName: lt.profileName(), createdAt: Date.now() }),
+    unshareSkill: id => F.deleteDoc(F.doc(db, 'library', id)),
+  };
 
   window.cloudPush = () => { clearTimeout(timer); timer = setTimeout(push, 1200); };
   window.addEventListener('online', () => { if (lt.updatedAt() > lt.lastSync()) push(); });
@@ -50,7 +77,7 @@ async function start() {
   window.cloudSignOut = () => A.signOut(auth);
 
   A.onAuthStateChanged(auth, user => {
-    unsub?.(); unsub = null; ref = null;
+    unsub?.(); unsub = null; ref = null; me = user;
     lt.status({ user: user ? (user.email || user.displayName) : null, msg: '' });
     if (!user) return;
     ref = F.doc(db, 'users', user.uid);

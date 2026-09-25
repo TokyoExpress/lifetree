@@ -292,6 +292,31 @@
   .ob-alt button { font-size: 13px; }
   body.ob-open { overflow: hidden; }
 
+  /* Leaderboards */
+  .ranks { max-width: 760px; margin: 0 auto; }
+  .ranks-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .ranks-head h2 { margin: 0; }
+  .ranks-head select { min-width: 220px; }
+  .rank-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .rank-note p { margin: 0; }
+  .rank-list { display: flex; flex-direction: column; gap: 6px; }
+  .rank-row { display: grid; grid-template-columns: 36px 40px 1fr auto 70px; gap: 10px; align-items: center; padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; }
+  .rank-row .rk { font-family: Silkscreen, monospace; font-size: 18px; color: var(--muted); text-align: center; }
+  .rank-row .rav { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; font-size: 24px; color: #0b0d17; background: linear-gradient(135deg, var(--accent), #3ad0ff); }
+  .rank-row .rnm { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank-row .rnm small, .rank-row .rlv small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+  .rank-row .rlv { font-family: Silkscreen, monospace; font-size: 13px; color: var(--gold); text-align: right; }
+  .rank-row .rlv small { font-family: 'Chakra Petch', sans-serif; }
+  .rank-row .rh { font-family: Silkscreen, monospace; text-align: right; }
+  .rank-row .you { font-size: 10px; font-weight: 700; color: #0b0d17; background: var(--accent); border-radius: 6px; padding: 1px 6px; vertical-align: middle; }
+  .rank-row.me { border-color: var(--accent); box-shadow: 0 0 16px -6px var(--accent); }
+  .rank-row.top1 .rk { color: #ffd166; text-shadow: 0 0 10px #ffd166; }
+  .rank-row.top2 .rk { color: #d6dbe8; }
+  .rank-row.top3 .rk { color: #e0955a; }
+  .rank-row.top1 { border-color: color-mix(in srgb, #ffd166 45%, var(--line)); }
+  .rank-empty { text-align: center; padding: 30px 0; }
+  .lib-item.community .li-nm small { color: color-mix(in srgb, var(--c) 70%, var(--muted)); }
+
   /* Mobile-only / desktop-only bits */
   .m-only, .m-flex { display: none; }
   .sheet-backdrop { display: none; }
@@ -313,7 +338,7 @@
     .attrs { order: 5; width: 100%; }
     nav.tabs {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
       padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
       background: rgba(11,13,23,.95); border-top: 1px solid var(--line); backdrop-filter: blur(10px);
     }
@@ -359,6 +384,11 @@
     .lib-item .li-act { display: none; }
     .lib-item.added .li-nm::after { content: ' ✓'; color: var(--muted); }
     .ob-opts { grid-template-columns: 1fr; }
+    .ranks-head select { min-width: 0; width: 100%; }
+    .rank-row { grid-template-columns: 22px 32px 1fr auto 50px; gap: 7px; padding: 8px 10px; }
+    .rank-row .rk { font-size: 15px; }
+    .rank-row .rav { width: 32px; height: 32px; font-size: 21px; }
+    .rank-row .rh { font-size: 12px; }
   }
 
 </style>
@@ -377,6 +407,7 @@
     <button data-v="trees" class="on" data-ic="oak">Trees</button>
     <button data-v="log" data-ic="scroll-unfurled">Log</button>
     <button data-v="life" data-ic="hourglass">Life</button>
+    <button data-v="ranks" data-ic="trophy">Ranks</button>
     <button data-v="settings" data-ic="cog" title="Settings"><span class="m-only">Settings</span></button>
   </nav>
   <button class="primary" id="logBtn" aria-label="Log time"><span class="d-only">+ Log time</span><span class="m-only">+</span></button>
@@ -441,6 +472,17 @@
 
 
   <!-- SETTINGS -->
+  <section class="view" id="v-ranks">
+    <div class="card ranks">
+      <div class="ranks-head">
+        <h2>Leaderboards</h2>
+        <select id="rankSkill" aria-label="Leaderboard"></select>
+      </div>
+      <div class="rank-note" id="rankNote"></div>
+      <div class="rank-list" id="rankList"></div>
+    </div>
+  </section>
+
   <section class="view" id="v-settings">
     <div class="grid2">
       <div>
@@ -453,6 +495,11 @@
           <h2>Cloud sync</h2>
           <p class="muted" id="syncStatus">Loading…</p>
           <div class="row" id="syncActions"></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h2>Leaderboards</h2>
+          <label class="check"><input type="checkbox" id="lbPublic" /> Show me on public leaderboards</label>
+          <p class="muted" id="lbNote" style="margin-bottom:0"></p>
         </div>
         <div class="card" style="margin-bottom:16px">
           <h2>Starting hours</h2>
@@ -541,6 +588,8 @@
       <div style="flex:1"><label>What you track</label><input type="text" id="sNoun" placeholder="Song" /></div>
       <div style="flex:1"><label>What the counter counts</label><input type="text" id="sCount" placeholder="full playthroughs" /></div>
     </div>
+    <div class="field" id="sShareRow"><label class="check"><input type="checkbox" id="sShare" /> Share to the community skill library</label>
+      <div class="muted" style="font-size:12px;margin-top:4px">Anyone can add it to their tree, and it gets its own leaderboard.</div></div>
     <div class="row" style="justify-content:flex-end">
       <button type="button" class="ghost" data-close>Cancel</button>
       <button class="primary" value="ok">Save</button>
@@ -572,8 +621,8 @@
     <div class="ob-alt" id="obAlt"></div>
   </div>
 </div>
-<script src="icons.js?v=1790355875"></script>
-<script type="module" src="sync.js?v=1790355875"></script>
+<script src="icons.js?v=1790356318"></script>
+<script type="module" src="sync.js?v=1790356318"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -691,7 +740,7 @@ function freshState() {
 let state;
 let firstVisit = false; // no save on this device yet → show the starter pick
 try { const raw = localStorage.getItem(KEY); firstVisit = !raw; state = JSON.parse(raw) || freshState(); } catch { state = freshState(); }
-if (!['trees', 'log', 'life', 'settings'].includes(state.ui.view)) state.ui.view = 'trees';
+if (!['trees', 'log', 'life', 'ranks', 'settings'].includes(state.ui.view)) state.ui.view = 'trees';
 // Bring older saves up to the current shape.
 function migrate() {
   { // emoji → game icons for existing saves
@@ -780,7 +829,21 @@ window.lifetree = {
     hideOnboard();
     render();
   },
-  status(info) { syncInfo = { ...syncInfo, ...info }; if (state.ui.view === 'settings') renderSync(); if (obOpen()) renderObAlt(); },
+  status(info) {
+    syncInfo = { ...syncInfo, ...info };
+    if (state.ui.view === 'settings') renderSync();
+    if (state.ui.view === 'ranks') renderRanks();
+    if (obOpen()) renderObAlt();
+  },
+  profileName: () => (state.profile.name || 'Player One').slice(0, 40),
+  // What the public leaderboard shows about you, or null when you haven't opted in.
+  publicProfile() {
+    if (!state.profile.public) return null;
+    const { bySkill, all } = totals();
+    const skills = {};
+    for (const s of state.skills) if (bySkill[s.id] > 0) skills[s.id] = Math.round(bySkill[s.id] * 100) / 100;
+    return { name: (state.profile.name || 'Player One').slice(0, 40), avatar: state.profile.avatar, cls: (state.profile.class || '').slice(0, 40), total: Math.round(all * 100) / 100, skills };
+  },
 };
 let syncInfo = { configured: false, user: null, msg: '' };
 function renderSync() {
@@ -792,6 +855,11 @@ function renderSync() {
   $('#syncActions').innerHTML = !i.configured ? ''
     : i.user ? '<button id="syncOut">Sign out</button>'
     : '<button class="primary" id="syncIn">Sign in with Google</button>';
+  $('#lbPublic').checked = !!state.profile.public;
+  $('#lbPublic').disabled = !i.user;
+  $('#lbNote').textContent = !i.user
+    ? 'Sign in above to join the leaderboards.'
+    : 'Anyone can see your name, avatar, class and hours per skill. Your logs, notes, counters and records stay private.';
 }
 
 // ---------- Helpers ----------
@@ -1256,6 +1324,65 @@ function skillOptions(selected, blank) {
     `<optgroup label="${c.name}">${state.skills.filter(s => s.cat === c.id).map(s =>
       `<option value="${s.id}" ${s.id === selected ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</optgroup>`).join('');
 }
+// ---------- Leaderboards ----------
+let rankCache = { field: null, at: 0, rows: null, err: null }, rankReq = 0;
+function rankOptions(selected) {
+  const seen = new Map();
+  for (const d of libraryEntries()) seen.set(d.id, d);
+  for (const s of state.skills) if (!seen.has(s.id)) seen.set(s.id, { id: s.id, cat: s.cat, name: s.name });
+  return `<option value="total" ${selected === 'total' ? 'selected' : ''}>Overall (all skills)</option>` + CATS.map(c => {
+    const list = [...seen.values()].filter(d => d.cat === c.id).sort((a, b) => a.name.localeCompare(b.name));
+    return `<optgroup label="${c.name}">${list.map(d => `<option value="${esc(d.id)}" ${d.id === selected ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</optgroup>`;
+  }).join('');
+}
+function renderRanks(force) {
+  const sel = state.ui.rank || 'total';
+  $('#rankSkill').innerHTML = rankOptions(sel);
+  const i = syncInfo;
+  $('#rankNote').innerHTML = !i.configured ? `<p class="muted">Leaderboards need cloud sync, which isn't set up.</p>`
+    : !i.user ? `<p class="muted">Sign in to put yourself on the boards.</p><button class="primary small" id="rankSignIn">Sign in with Google</button>`
+    : !state.profile.public ? `<p class="muted">You're not on the leaderboards yet.</p><button class="primary small" id="rankJoin">Join as ${esc(state.profile.name)}</button>`
+    : `<p class="muted">You're on the boards as <b style="color:var(--text)">${esc(state.profile.name)}</b>. Change your name or avatar in Settings.</p>`;
+  const list = $('#rankList');
+  if (!window.cloud) { list.innerHTML = `<p class="muted">${i.configured ? 'Loading…' : ''}</p>`; return; }
+  const field = sel === 'total' ? 'total' : `skills.${sel}`;
+  const fresh = rankCache.field === field && Date.now() - rankCache.at < 60000;
+  if (fresh && !force) return drawRanks(sel);
+  if (rankCache.field !== field) list.innerHTML = '<p class="muted">Loading…</p>';
+  const req = ++rankReq;
+  window.cloud.leaderboard(field)
+    .then(rows => { if (req === rankReq) { rankCache = { field, at: Date.now(), rows, err: null }; drawRanks(sel); } })
+    .catch(e => { if (req === rankReq) { rankCache = { field, at: Date.now(), rows: null, err: e.code || e.message }; drawRanks(sel); } });
+}
+function drawRanks(sel) {
+  const { rows, err } = rankCache, meId = window.cloud?.uid();
+  if (err) return $('#rankList').innerHTML = `<p class="muted">Couldn't load the leaderboard (${esc(err)}).</p>`;
+  if (!rows?.length) return $('#rankList').innerHTML = `<p class="muted rank-empty">Nobody's on this board yet.${state.profile.public ? ' Log some time to claim #1.' : ''}</p>`;
+  const k = sel === 'total' ? CHAR_K : SKILL_K;
+  $('#rankList').innerHTML = rows.map((r, n) => {
+    const h = sel === 'total' ? r.total : r.skills?.[sel] || 0, L = lvl(h, k);
+    return `<div class="rank-row ${r.uid === meId ? 'me' : ''} ${n < 3 ? 'top' + (n + 1) : ''}">
+      <span class="rk">${n + 1}</span>
+      <span class="rav">${icon(r.avatar) || icon('wizard-staff')}</span>
+      <span class="rnm">${esc(r.name || 'Player')}${r.uid === meId ? ' <span class="you">you</span>' : ''}<small>${esc(r.cls || '')}</small></span>
+      <span class="rlv">Lv ${L}<small>${sel === 'total' ? '' : titleFor(L)}</small></span>
+      <span class="rh">${fmtH(h)}</span>
+    </div>`;
+  }).join('');
+}
+async function setPublic(on) {
+  state.profile.public = on;
+  save();
+  try { await window.cloud?.publishProfile(); } catch {}
+  rankCache.at = 0;
+  render();
+}
+$('#rankSkill').addEventListener('change', e => { state.ui.rank = e.target.value; save(); renderRanks(); });
+$('#rankNote').addEventListener('click', e => {
+  if (e.target.closest('#rankSignIn')) window.cloudSignIn?.();
+  if (e.target.closest('#rankJoin')) setPublic(true);
+});
+
 // ---------- Settings ----------
 function renderSettings() {
   renderSync();
@@ -1281,6 +1408,7 @@ function render() {
   if (v === 'trees') renderTrees();
   if (v === 'log') renderLog();
   if (v === 'life') renderLife();
+  if (v === 'ranks') renderRanks();
   if (v === 'settings') renderSettings();
 }
 
@@ -1315,6 +1443,9 @@ function openSkill(id, catId) {
     $('#sCount').value = editing.count;
     $('#sItemFields').style.display = editing.items ? '' : 'none';
   }
+  const shareable = canShare(editing);
+  $('#sShareRow').style.display = shareable ? '' : 'none';
+  $('#sShare').checked = editing ? !!editing.shared : true;
   $('#skillDlg').showModal();
 }
 function syncCatDefaults(resetItems) {
@@ -1337,8 +1468,16 @@ $('#skillForm').addEventListener('submit', e => {
     noun: $('#sNoun').value.trim() || 'Item', count: $('#sCount').value.trim() || 'times',
   };
   if (!data.name) return;
+  const shareable = canShare(editing);
+  let sk = editing;
   if (editing) Object.assign(editing, data);
-  else { const id = uid(); state.skills.push({ id, ...data }); state.ui.sel = id; }
+  else { sk = { id: uid(), ...data }; state.skills.push(sk); state.ui.sel = sk.id; }
+  if (shareable) {
+    const want = $('#sShare').checked;
+    if (want) window.cloud.shareSkill(libDef(sk)).catch(err => alert(`Couldn't share "${sk.name}" (${err.code || err.message}).`));
+    else if (sk.shared) window.cloud.unshareSkill(sk.id).catch(() => {});
+    sk.shared = want;
+  }
   save(); render();
 });
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
@@ -1353,40 +1492,53 @@ $('#pclass').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preve
 $('#pclass').addEventListener('blur', e => { state.profile.class = e.target.textContent.trim().slice(0, 40); save(); renderHeader(); });
 
 // ---------- Skill library ----------
-let libCat = 'all';
+// Built-in entries are arrays [id, cat, group, name, icon, noun, count]; community ones come from Firestore.
+let libCat = 'all', community = [];
+const BUILTIN_IDS = new Set(LIBRARY.map(d => d[0]));
+const libDef = s => ({ id: s.id, cat: s.cat, group: s.group || 'Other', name: s.name, icon: s.icon, noun: s.noun || '', count: s.count || '', items: !!s.items });
+// Only your own custom skills can be shared (not built-ins, not ones you added from the community).
+const canShare = s => !!window.cloud?.signedIn() && (!s || (!BUILTIN_IDS.has(s.id) && !s.community));
+function libraryEntries() {
+  const builtin = LIBRARY.map(([id, cat, group, name, icon, noun, count]) => ({ id, cat, group, name, icon, noun, count }));
+  const extra = community.filter(d => !BUILTIN_IDS.has(d.id) && cat(d.cat) && d.name);
+  return [...builtin, ...extra];
+}
 function openLibrary(catId) {
   libCat = catId || 'all';
   $('#libSearch').value = '';
   renderLibrary();
   $('#libDlg').showModal();
+  window.cloud?.library().then(list => { community = list; if ($('#libDlg').open) renderLibrary(); }).catch(() => {});
   if (matchMedia('(min-width: 761px)').matches) $('#libSearch').focus();
 }
 function renderLibrary() {
   const q = $('#libSearch').value.trim().toLowerCase();
   const have = new Set(state.skills.map(s => s.id));
-  const match = d => !q || d[3].toLowerCase().includes(q) || d[2].toLowerCase().includes(q);
+  const all = libraryEntries();
+  const match = d => !q || d.name.toLowerCase().includes(q) || d.group.toLowerCase().includes(q) || (d.byName || '').toLowerCase().includes(q);
   $('#libTabs').innerHTML = [{ id: 'all', name: 'All' }, ...CATS].map(c => {
-    const list = LIBRARY.filter(d => c.id === 'all' || d[1] === c.id);
-    return `<button data-libcat="${c.id}" class="small ${libCat === c.id ? 'on' : ''}" ${c.color ? `style="--c:${c.color}"` : ''}>${c.icon ? icon(c.icon) + ' ' : ''}${c.name} <span class="muted">${list.filter(d => have.has(d[0])).length}/${list.length}</span></button>`;
+    const list = all.filter(d => c.id === 'all' || d.cat === c.id);
+    return `<button data-libcat="${c.id}" class="small ${libCat === c.id ? 'on' : ''}" ${c.color ? `style="--c:${c.color}"` : ''}>${c.icon ? icon(c.icon) + ' ' : ''}${c.name} <span class="muted">${list.filter(d => have.has(d.id)).length}/${list.length}</span></button>`;
   }).join('');
   const html = CATS.filter(c => libCat === 'all' || libCat === c.id).map(c => {
-    const items = LIBRARY.filter(d => d[1] === c.id && match(d)).sort((a, b) => a[2].localeCompare(b[2]) || a[3].localeCompare(b[3]));
+    const items = all.filter(d => d.cat === c.id && match(d)).sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
     if (!items.length) return '';
     return `<div class="lib-sec" style="--c:${c.color}"><h3>${icon(c.icon)} ${c.name}</h3><div class="lib-grid">${items.map(d => {
-      const added = have.has(d[0]);
-      return `<button class="lib-item ${added ? 'added' : ''}" data-lib="${d[0]}" ${added ? 'disabled' : ''}>
-        <span class="li-ic">${icon(d[4])}</span><span class="li-nm">${esc(d[3])}<small>${esc(d[2])}</small></span>
+      const added = have.has(d.id);
+      return `<button class="lib-item ${added ? 'added' : ''} ${d.by ? 'community' : ''}" data-lib="${esc(d.id)}" ${added ? 'disabled' : ''}>
+        <span class="li-ic">${icon(d.icon) || icon('sparkles')}</span><span class="li-nm">${esc(d.name)}<small>${esc(d.group)}${d.by ? ` · by ${esc(d.byName || 'someone')}` : ''}</small></span>
         <span class="li-act">${added ? '✓ Added' : '+ Add'}</span></button>`;
     }).join('')}</div></div>`;
   }).join('');
   $('#libList').innerHTML = html || `<p class="muted" style="text-align:center;margin-top:40px">No matches. Use "+ Custom skill" to make it yourself.</p>`;
-  const total = LIBRARY.length, added = LIBRARY.filter(d => have.has(d[0])).length;
-  $('#libCount').textContent = `${added} of ${total} added`;
+  const added = all.filter(d => have.has(d.id)).length, shared = all.filter(d => d.by).length;
+  $('#libCount').textContent = `${added} of ${all.length} added${shared ? ` · ${shared} from the community` : ''}`;
 }
 function addFromLibrary(id) {
-  const d = LIBRARY.find(x => x[0] === id);
+  const d = libraryEntries().find(x => x.id === id);
   if (!d || skill(id)) return;
-  const sk = makeSkill(d);
+  const sk = makeSkill([d.id, d.cat, d.group, d.name, d.icon, d.noun, d.count]);
+  if (d.by) { sk.items = !!d.items; sk.community = true; }
   const last = state.skills.findLastIndex(s => s.cat === sk.cat && s.group === sk.group);
   state.skills.splice(last < 0 ? state.skills.length : last + 1, 0, sk);
   save(); render(); renderLibrary();
@@ -1591,6 +1743,7 @@ $('#v-trees').addEventListener('click', e => {
     const s = skill(del.dataset.del);
     const n = state.logs.filter(l => l.skill === s.id).length;
     if (!confirm(`Delete "${s.name}"${n ? ` and its ${n} time entries` : ''}?`)) return;
+    if (s.shared) window.cloud?.unshareSkill(s.id).catch(() => {});
     const itemIds = new Set(skillItems(s.id).map(i => i.id));
     state.skills = state.skills.filter(x => x.id !== s.id);
     state.logs = state.logs.filter(l => l.skill !== s.id);
@@ -1660,6 +1813,7 @@ $('#syncActions').addEventListener('click', e => {
   if (e.target.closest('#syncIn')) window.cloudSignIn?.();
   if (e.target.closest('#syncOut')) window.cloudSignOut?.();
 });
+$('#lbPublic').addEventListener('change', e => setPublic(e.target.checked));
 $('#convertBtn').addEventListener('click', () => {
   const n = state.logs.length;
   if (!n) { $('#convertNote').textContent = 'There are no time logs to convert.'; return; }

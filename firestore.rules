@@ -1,9 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each signed-in user can only read and write their own save.
+    // Private save: only its owner can read or write it.
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Public leaderboard entries (opt-in): anyone can read, only the owner can write.
+    match /profiles/{uid} {
+      allow read: if true;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.total is number
+        && request.resource.data.skills is map;
+    }
+    // Community skill library: anyone can read, signed-in users can share, only the sharer can change it.
+    match /library/{skillId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.by == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40;
+      allow delete: if request.auth != null && resource.data.by == request.auth.uid;
+      allow update: if request.auth != null && resource.data.by == request.auth.uid
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40;
     }
   }
 }
