@@ -98,7 +98,7 @@
   .cat-head .name { font-family: Silkscreen, monospace; font-size: 24px; color: var(--c); text-shadow: 0 0 12px var(--c); }
   .cat-head .lv { font-size: 12px; color: var(--muted); }
   .cat-head button { position: absolute; top: -6px; right: 0; }
-  .cat > svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+  .cat > svg { display: block; width: 100%; height: auto; margin: 4px auto 0; } /* never scaled past natural size */
   .edge { fill: none; stroke: rgba(255,255,255,.16); stroke-width: 2; }
   .edge.on { stroke: var(--c); filter: drop-shadow(0 0 3px var(--c)); }
   svg text { fill: var(--text); text-anchor: middle; }
@@ -241,6 +241,57 @@
   .daycard #editToggle { flex: none; align-self: flex-start; }
   .day-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 3px; }
 
+  /* Empty tree */
+  .cat-empty { text-align: center; padding: 30px 10px 24px; }
+  .cat-empty p { color: var(--muted); margin: 0 0 12px; }
+  .cat-empty button { border-color: var(--c); color: var(--c); background: color-mix(in srgb, var(--c) 10%, transparent); }
+
+  /* Skill library */
+  dialog.lib { width: min(760px, 94vw); max-height: 86vh; padding: 18px; display: none; flex-direction: column; gap: 10px; }
+  dialog.lib[open] { display: flex; }
+  .lib-head { display: flex; justify-content: space-between; align-items: center; }
+  .lib-head h2 { margin: 0; }
+  #libSearch { width: 100%; }
+  .lib-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .lib-tabs button { font-family: Silkscreen, monospace; font-size: 12px; color: var(--muted); }
+  .lib-tabs button.on { color: var(--c, var(--gold)); border-color: var(--c, var(--gold)); background: color-mix(in srgb, var(--c, var(--gold)) 12%, transparent); }
+  .lib-list { overflow-y: auto; min-height: 200px; padding-right: 4px; }
+  .lib-sec { margin: 6px 0 14px; }
+  .lib-sec h3 { color: var(--c); margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+  .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .lib-item { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px; background: var(--panel-2); }
+  .lib-item:hover:not(:disabled) { border-color: var(--c); }
+  .lib-item .li-ic { font-size: 26px; color: var(--c); display: flex; }
+  .lib-item .li-nm { flex: 1; min-width: 0; font-weight: 600; line-height: 1.2; }
+  .lib-item .li-nm small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+  .lib-item .li-act { font-size: 12px; font-weight: 700; color: var(--c); white-space: nowrap; }
+  .lib-item.added { opacity: .55; cursor: default; }
+  .lib-item.added .li-act { color: var(--muted); }
+  .lib-foot { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .lib-foot .muted { margin-right: auto; font-size: 12px; }
+
+  /* Starter pick (first visit) */
+  .onboard { position: fixed; inset: 0; z-index: 90; overflow-y: auto; display: grid; place-items: center; padding: 24px 16px;
+    background: var(--bg); background-image: radial-gradient(circle at 20% 0%, #231d55 0%, transparent 50%), radial-gradient(circle at 90% 100%, #0f2a3a 0%, transparent 45%); }
+  .onboard[hidden] { display: none; }
+  .ob-card { width: min(560px, 100%); text-align: center; }
+  .ob-logo { font-size: 56px; color: var(--gold); filter: drop-shadow(0 0 16px var(--gold)); display: flex; justify-content: center; }
+  .ob-card h1 { font-size: clamp(26px, 6vw, 38px); margin: 10px 0 8px; color: var(--gold); text-shadow: 0 0 16px color-mix(in srgb, var(--gold) 50%, transparent); }
+  .ob-sub { color: var(--muted); margin: 0 auto 22px; max-width: 440px; line-height: 1.5; }
+  .ob-card label { text-align: left; }
+  .ob-card #obName { width: 100%; margin-bottom: 18px; font-size: 16px; }
+  .ob-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ob-opt { position: relative; display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 18px 16px; background: var(--panel); border-radius: 14px; line-height: 1.4; }
+  .ob-opt b { font-family: Silkscreen, monospace; font-weight: 400; font-size: 16px; }
+  .ob-opt:hover { border-color: var(--gold); box-shadow: 0 0 20px -8px var(--gold); }
+  .ob-opt[data-start="starter"] { border-color: color-mix(in srgb, var(--gold) 45%, var(--line)); }
+  .ob-tag { position: absolute; top: -9px; right: 12px; background: var(--gold); color: #0b0d17; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: .5px; }
+  .ob-cats { display: flex; gap: 10px; font-family: Silkscreen, monospace; font-size: 12px; flex-wrap: wrap; }
+  .ob-cats span { display: flex; align-items: center; gap: 4px; }
+  .ob-alt { margin-top: 20px; color: var(--muted); font-size: 13px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .ob-alt button { font-size: 13px; }
+  body.ob-open { overflow: hidden; }
+
   /* Mobile-only / desktop-only bits */
   .m-only, .m-flex { display: none; }
   .sheet-backdrop { display: none; }
@@ -302,6 +353,12 @@
     .lg-row > div { grid-column: 1 / -1; order: 3; }
     dialog { width: 94vw; max-height: 88vh; }
     .picker { max-height: 200px; }
+    dialog.lib { max-height: 90vh; padding: 14px; }
+    .lib-grid { grid-template-columns: 1fr 1fr; }
+    .lib-item { padding: 8px; gap: 8px; }
+    .lib-item .li-act { display: none; }
+    .lib-item.added .li-nm::after { content: ' ✓'; color: var(--muted); }
+    .ob-opts { grid-template-columns: 1fr; }
   }
 
 </style>
@@ -410,7 +467,7 @@
             <button id="exportBtn">⬇ Export JSON</button>
             <button id="importBtn">⬆ Import JSON</button>
             <input type="file" id="importFile" accept=".json" hidden />
-            <button id="resetBtn" style="margin-left:auto;border-color:var(--danger);color:var(--danger)">Reset everything</button>
+            <button id="resetBtn" style="margin-left:auto;border-color:var(--danger);color:var(--danger)">Start over</button>
           </div>
         </div>
       </div>
@@ -445,6 +502,21 @@
 </dialog>
 
 <!-- Skill dialog -->
+<dialog id="libDlg" class="lib">
+  <div class="lib-head">
+    <h2>Skill library</h2>
+    <button class="ghost small" data-close aria-label="Close">✕</button>
+  </div>
+  <input type="search" id="libSearch" placeholder="Search skills…" autocomplete="off" />
+  <div class="lib-tabs" id="libTabs"></div>
+  <div class="lib-list" id="libList"></div>
+  <div class="lib-foot">
+    <span class="muted" id="libCount"></span>
+    <button id="libCustom">+ Custom skill</button>
+    <button class="primary" data-close>Done</button>
+  </div>
+</dialog>
+
 <dialog id="groupDlg">
   <form method="dialog" id="groupForm">
     <h2>New branch</h2>
@@ -477,8 +549,31 @@
 </dialog>
 
 <div id="dropLine"></div>
-<script src="icons.js?v=1790355247"></script>
-<script type="module" src="sync.js?v=1790355247"></script>
+
+<div class="onboard" id="onboard" hidden>
+  <div class="ob-card">
+    <div class="ob-logo" data-ic="crossed-swords"></div>
+    <h1>Life Skill Tree</h1>
+    <p class="ob-sub">Level up in real life. Log hours as XP, count the songs you learn and dishes you cook, track your PRs, and watch your skill trees grow.</p>
+    <label for="obName">What should we call you?</label>
+    <input type="text" id="obName" placeholder="Player One" maxlength="30" autocomplete="nickname" />
+    <div class="ob-opts">
+      <button class="ob-opt" data-start="starter">
+        <span class="ob-tag">Recommended</span>
+        <b>Starter trees</b>
+        <span class="ob-cats" id="obCats"></span>
+        <span class="muted" id="obStarterText"></span>
+      </button>
+      <button class="ob-opt" data-start="blank">
+        <b>Blank slate</b>
+        <span class="muted">Start with empty trees and pick skills from the library, or create your own.</span>
+      </button>
+    </div>
+    <div class="ob-alt" id="obAlt"></div>
+  </div>
+</div>
+<script src="icons.js?v=1790355875"></script>
+<script type="module" src="sync.js?v=1790355875"></script>
 <script>
 // ---------- Data ----------
 const CATS = [
@@ -533,6 +628,48 @@ const DEFAULT_SKILLS = [
   ['books', 'exp', 'Leisure', 'Books', 'book-pile', 'Book', 'reads'],
 ];
 
+// Extra skills that live only in the library (new users don't get them by default).
+const EXTRA_SKILLS = [
+  ['soccer', 'strdex', 'Team Sports', 'Soccer', 'soccer-ball'],
+  ['football', 'strdex', 'Team Sports', 'Football', 'american-football-ball'],
+  ['baseball', 'strdex', 'Team Sports', 'Baseball', 'baseball-bat'],
+  ['tennis', 'strdex', 'Racket Sports', 'Tennis', 'tennis-racket'],
+  ['yoga', 'strdex', 'Strength', 'Yoga', 'meditation'],
+  ['boxing', 'strdex', 'Combat', 'Boxing', 'boxing-glove'],
+  ['martialarts', 'strdex', 'Combat', 'Martial Arts', 'high-kick'],
+  ['archery', 'strdex', 'Combat', 'Archery', 'archery-target'],
+  ['skiing', 'strdex', 'Mountain', 'Skiing', 'ski-boot'],
+  ['swimming', 'strdex', 'Outdoor', 'Swimming', 'swimfins'],
+  ['skateboarding', 'strdex', 'Outdoor', 'Skateboarding', 'skateboard'],
+  ['golf', 'strdex', 'Outdoor', 'Golf', 'golf-flag'],
+
+  ['singing', 'arts', 'Music', 'Singing', 'microphone', 'Song', 'full playthroughs'],
+  ['violin', 'arts', 'Music', 'Violin', 'violin', 'Song', 'full playthroughs'],
+  ['saxophone', 'arts', 'Music', 'Saxophone', 'saxophone', 'Song', 'full playthroughs'],
+  ['flute', 'arts', 'Music', 'Flute', 'flute', 'Song', 'full playthroughs'],
+  ['harp', 'arts', 'Music', 'Harp', 'harp', 'Song', 'full playthroughs'],
+  ['production', 'arts', 'Music', 'Music Production', 'headphones', 'Track', 'versions'],
+  ['painting', 'arts', 'Visual Arts', 'Painting', 'paint-brush', 'Piece', 'sessions'],
+  ['streetart', 'arts', 'Visual Arts', 'Street Art', 'spray', 'Piece', 'made'],
+  ['filmmaking', 'arts', 'Visual Arts', 'Filmmaking', 'film-strip', 'Film', 'cuts'],
+  ['poetry', 'arts', 'Literary', 'Poetry', 'feather', 'Poem', 'drafts'],
+  ['calligraphy', 'arts', 'Literary', 'Calligraphy', 'scroll-quill', 'Piece', 'made'],
+  ['robotics', 'arts', 'Engineering', 'Robotics', 'gears', 'Project', 'built'],
+
+  ['parties', 'exp', 'People', 'Parties', 'party-popper', 'Event', 'attended'],
+  ['spanish', 'exp', 'World', 'Spanish', 'world', 'Lesson', 'completed'],
+  ['french', 'exp', 'World', 'French', 'globe', 'Lesson', 'completed'],
+  ['camping', 'exp', 'World', 'Camping', 'backpack', 'Trip', 'taken'],
+  ['roadtrips', 'exp', 'World', 'Road Trips', 'compass', 'Trip', 'taken'],
+  ['boardgames', 'exp', 'Leisure', 'Board Games', 'dice-six-faces-six', 'Game', 'played'],
+  ['chess', 'exp', 'Leisure', 'Chess', 'chess-knight', 'Opening', 'games'],
+  ['concerts', 'exp', 'Leisure', 'Concerts', 'ticket', 'Show', 'attended'],
+  ['theater', 'exp', 'Leisure', 'Theater', 'drama-masks', 'Show', 'attended'],
+  ['meditation', 'exp', 'Mind', 'Meditation', 'brain', 'Session', 'done'],
+  ['journaling', 'exp', 'Mind', 'Journaling', 'open-book', 'Entry', 'written'],
+];
+const LIBRARY = [...DEFAULT_SKILLS, ...EXTRA_SKILLS];
+
 const KEY = 'lifetree.v2';
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -552,7 +689,8 @@ function freshState() {
   };
 }
 let state;
-try { state = JSON.parse(localStorage.getItem(KEY)) || freshState(); } catch { state = freshState(); }
+let firstVisit = false; // no save on this device yet → show the starter pick
+try { const raw = localStorage.getItem(KEY); firstVisit = !raw; state = JSON.parse(raw) || freshState(); } catch { state = freshState(); }
 if (!['trees', 'log', 'life', 'settings'].includes(state.ui.view)) state.ui.view = 'trees';
 // Bring older saves up to the current shape.
 function migrate() {
@@ -632,16 +770,17 @@ window.lifetree = {
   updatedAt: () => state.updatedAt || 0,
   lastSync: () => state.lastSync || 0,
   hasData: () => state.logs.length + state.plays.length + state.attempts.length + state.items.length > 0 || state.skills.some(s => s.base),
-  markSynced(at) { state.lastSync = at; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} },
+  markSynced(at) { state.lastSync = at; if (!obOpen()) try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} },
   applyRemote(data, at) {
     state = { ...freshState(), ...data, ui: state.ui, version: data.version || 0 };
     migrate();
     state.updatedAt = at; state.lastSync = at;
     lastPayload = JSON.stringify(payload());
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+    hideOnboard();
     render();
   },
-  status(info) { syncInfo = { ...syncInfo, ...info }; if (state.ui.view === 'settings') renderSync(); },
+  status(info) { syncInfo = { ...syncInfo, ...info }; if (state.ui.view === 'settings') renderSync(); if (obOpen()) renderObAlt(); },
 };
 let syncInfo = { configured: false, user: null, msg: '' };
 function renderSync() {
@@ -673,7 +812,7 @@ function prog(h, k) {
   const L = lvl(h, k), a = hoursFor(L, k), b = hoursFor(L + 1, k);
   return { L, pct: (h - a) / (b - a), toNext: b - h };
 }
-const TITLES = [[0, 'Unawakened'], [1, 'Novice'], [5, 'Apprentice'], [10, 'Adept'], [20, 'Expert'], [40, 'Master'], [63, 'Grandmaster']];
+const TITLES = [[0, 'Unlearned'], [1, 'Novice'], [5, 'Apprentice'], [10, 'Adept'], [20, 'Expert'], [40, 'Master'], [63, 'Grandmaster']];
 const titleFor = L => [...TITLES].reverse().find(([t]) => L >= t)[1];
 const nextTitle = L => TITLES.find(([t]) => t > L);
 
@@ -792,8 +931,9 @@ function catSvg(c, bySkill) {
     <circle class="ring" cx="${RX}" cy="${RY}" r="${RR}" transform="rotate(-90 ${RX} ${RY})" stroke-dasharray="${RC * cp.pct} ${RC}"/>
     <text class="lbl" x="${RX}" y="${RY - 13}">LV</text>
     <text class="num" x="${RX}" y="${RY + 5}">${cp.L}</text></g>`;
-  if (!skills.length) nodes += `<text class="sub" x="${RX}" y="${BUS + 20}" style="fill:var(--muted)">No skills yet</text>`;
-  return `<svg viewBox="0 0 ${W} ${skills.length ? H : BUS + 40}" style="--c:${c.color}">${edgesOff}${edgesOn}${nodes}</svg>`;
+  const empty = `<div class="cat-empty"><p>No skills yet</p><button data-lib-open="${c.id}">${icon('open-book')} Browse skill library</button></div>`;
+  if (!skills.length && !groups.length) return empty;
+  return `<svg viewBox="0 0 ${W} ${skills.length ? H : BUS + 60}" style="--c:${c.color};max-width:${W}px">${edgesOff}${edgesOn}${nodes}</svg>${skills.length ? '' : empty}`;
 }
 
 // ---------- Day strip ----------
@@ -843,7 +983,7 @@ function renderTrees() {
       <div class="cat-head">
         <div class="title-row"><span class="ic">${icon(c.icon)}</span><span class="name">${c.name}</span></div>
         <div class="lv">${fmtH(byCat[c.id] || 0)} logged</div>
-        <button class="small ghost" data-newskill="${c.id}" title="Add a skill">+</button>
+        <button class="small ghost" data-lib-open="${c.id}" title="Add a skill">+</button>
         ${editMode ? `<button class="small ghost newgroup" data-newgroup="${c.id}">+ branch</button>` : ''}
       </div>
       ${catSvg(c, bySkill)}
@@ -1212,6 +1352,85 @@ $('#logBtn').addEventListener('click', () => openLog());
 $('#pclass').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
 $('#pclass').addEventListener('blur', e => { state.profile.class = e.target.textContent.trim().slice(0, 40); save(); renderHeader(); });
 
+// ---------- Skill library ----------
+let libCat = 'all';
+function openLibrary(catId) {
+  libCat = catId || 'all';
+  $('#libSearch').value = '';
+  renderLibrary();
+  $('#libDlg').showModal();
+  if (matchMedia('(min-width: 761px)').matches) $('#libSearch').focus();
+}
+function renderLibrary() {
+  const q = $('#libSearch').value.trim().toLowerCase();
+  const have = new Set(state.skills.map(s => s.id));
+  const match = d => !q || d[3].toLowerCase().includes(q) || d[2].toLowerCase().includes(q);
+  $('#libTabs').innerHTML = [{ id: 'all', name: 'All' }, ...CATS].map(c => {
+    const list = LIBRARY.filter(d => c.id === 'all' || d[1] === c.id);
+    return `<button data-libcat="${c.id}" class="small ${libCat === c.id ? 'on' : ''}" ${c.color ? `style="--c:${c.color}"` : ''}>${c.icon ? icon(c.icon) + ' ' : ''}${c.name} <span class="muted">${list.filter(d => have.has(d[0])).length}/${list.length}</span></button>`;
+  }).join('');
+  const html = CATS.filter(c => libCat === 'all' || libCat === c.id).map(c => {
+    const items = LIBRARY.filter(d => d[1] === c.id && match(d)).sort((a, b) => a[2].localeCompare(b[2]) || a[3].localeCompare(b[3]));
+    if (!items.length) return '';
+    return `<div class="lib-sec" style="--c:${c.color}"><h3>${icon(c.icon)} ${c.name}</h3><div class="lib-grid">${items.map(d => {
+      const added = have.has(d[0]);
+      return `<button class="lib-item ${added ? 'added' : ''}" data-lib="${d[0]}" ${added ? 'disabled' : ''}>
+        <span class="li-ic">${icon(d[4])}</span><span class="li-nm">${esc(d[3])}<small>${esc(d[2])}</small></span>
+        <span class="li-act">${added ? '✓ Added' : '+ Add'}</span></button>`;
+    }).join('')}</div></div>`;
+  }).join('');
+  $('#libList').innerHTML = html || `<p class="muted" style="text-align:center;margin-top:40px">No matches. Use "+ Custom skill" to make it yourself.</p>`;
+  const total = LIBRARY.length, added = LIBRARY.filter(d => have.has(d[0])).length;
+  $('#libCount').textContent = `${added} of ${total} added`;
+}
+function addFromLibrary(id) {
+  const d = LIBRARY.find(x => x[0] === id);
+  if (!d || skill(id)) return;
+  const sk = makeSkill(d);
+  const last = state.skills.findLastIndex(s => s.cat === sk.cat && s.group === sk.group);
+  state.skills.splice(last < 0 ? state.skills.length : last + 1, 0, sk);
+  save(); render(); renderLibrary();
+}
+$('#libSearch').addEventListener('input', renderLibrary);
+$('#libTabs').addEventListener('click', e => { const b = e.target.closest('[data-libcat]'); if (b) { libCat = b.dataset.libcat; renderLibrary(); } });
+$('#libList').addEventListener('click', e => { const b = e.target.closest('[data-lib]'); if (b) addFromLibrary(b.dataset.lib); });
+$('#libCustom').addEventListener('click', () => { $('#libDlg').close(); openSkill(null, libCat === 'all' ? CATS[0].id : libCat); });
+
+// ---------- Starter pick (first visit) ----------
+const obOpen = () => !$('#onboard').hidden;
+function showOnboard() {
+  $('#obName').value = '';
+  $('#obCats').innerHTML = CATS.map(c => `<span style="color:${c.color}">${icon(c.icon)} ${c.name}</span>`).join('');
+  $('#obStarterText').textContent = `${DEFAULT_SKILLS.length} skills across all three trees. Remove anything you don't do.`;
+  renderObAlt();
+  $('#onboard').hidden = false;
+  document.body.classList.add('ob-open');
+}
+function hideOnboard() { $('#onboard').hidden = true; document.body.classList.remove('ob-open'); }
+function renderObAlt() {
+  const i = syncInfo;
+  $('#obAlt').innerHTML = i.user
+    ? `<span>Signed in as ${esc(i.user)}. No cloud save yet, so pick a start above.</span>`
+    : `<span>Already have a save?</span>${i.configured ? `<button class="small" id="obSignIn">Sign in with Google</button>` : ''}<button class="small ghost" id="obImport">Import a backup</button>`;
+}
+function startFresh(kind) {
+  const name = $('#obName').value.trim();
+  state = freshState();
+  if (kind === 'blank') { state.skills = []; state.groupOrder = Object.fromEntries(CATS.map(c => [c.id, []])); }
+  if (name) state.profile.name = name;
+  lastPayload = ''; // force a save (and a cloud upload if signed in)
+  hideOnboard();
+  save(); render();
+  if (kind === 'blank') openLibrary('all');
+}
+$('#onboard').addEventListener('click', e => {
+  const st = e.target.closest('[data-start]');
+  if (st) return startFresh(st.dataset.start);
+  if (e.target.closest('#obSignIn')) return window.cloudSignIn?.();
+  if (e.target.closest('#obImport')) return $('#importFile').click();
+});
+$('#obName').addEventListener('keydown', e => { if (e.key === 'Enter') startFresh('starter'); });
+
 // ---------- Edit layout (drag & drop) ----------
 let newGroupCat = null;
 $('#groupForm').addEventListener('submit', e => {
@@ -1334,8 +1553,8 @@ $('#v-trees').addEventListener('click', e => {
     state.groupOrder[dg.dataset.cat] = state.groupOrder[dg.dataset.cat].filter(g => g !== dg.dataset.delgroup);
     save(); return render();
   }
-  const ns = t.closest('[data-newskill]');
-  if (ns) return openSkill(null, ns.dataset.newskill);
+  const lo = t.closest('[data-lib-open]');
+  if (lo) return openLibrary(lo.dataset.libOpen);
   const n = t.closest('[data-skill]');
   if (n) { state.ui.sel = state.ui.sel === n.dataset.skill ? null : n.dataset.skill; save(); return render(); }
   if (t.closest('[data-desel]')) { state.ui.sel = null; save(); return render(); }
@@ -1433,7 +1652,7 @@ $('#importFile').addEventListener('change', async e => {
   try {
     const d = JSON.parse(await f.text());
     if (!d.skills || !d.logs) throw 0;
-    state = { ...freshState(), ...d, version: d.version || 0 }; migrate(); save(); render();
+    state = { ...freshState(), ...d, version: d.version || 0 }; migrate(); hideOnboard(); save(); render();
   } catch { alert('That file doesn\'t look like a Life Skill Tree save.'); }
   e.target.value = '';
 });
@@ -1452,11 +1671,16 @@ $('#convertBtn').addEventListener('click', () => {
   $('#convertNote').textContent = `Done. ${fmtH(h)} moved into starting hours.`;
 });
 $('#resetBtn').addEventListener('click', () => {
-  if (confirm('Wipe all skills, logs and settings? Export a backup first if you want one.')) { state = freshState(); save(); render(); }
+  const cloud = syncInfo.user ? ' Your cloud save will be replaced too once you pick a new start.' : '';
+  if (!confirm(`Start over? This deletes all your skills, logs and settings on this device.${cloud} Export a backup first if you want one.`)) return;
+  try { localStorage.removeItem(KEY); } catch {}
+  state = freshState();
+  render(); showOnboard();
 });
 
 document.querySelectorAll('[data-ic]').forEach(b => b.insertAdjacentHTML('afterbegin', icon(b.dataset.ic)));
 render();
+if (firstVisit) showOnboard();
 </script>
 </body>
 </html>
