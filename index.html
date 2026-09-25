@@ -498,6 +498,7 @@ const DEFAULT_SKILLS = [
   ['snowboarding', 'strdex', 'Mountain', 'Snowboarding', 'snowboard'],
   ['hiking', 'strdex', 'Outdoor', 'Hiking', 'hiking'],
   ['biking', 'strdex', 'Outdoor', 'Biking', 'cycling'],
+  ['running', 'strdex', 'Outdoor', 'Running', 'sprint'],
 
   ['piano', 'arts', 'Music', 'Piano', 'piano-keys', 'Song', 'full playthroughs'],
   ['guitar', 'arts', 'Music', 'Guitar', 'guitar', 'Song', 'full playthroughs'],
@@ -505,14 +506,29 @@ const DEFAULT_SKILLS = [
   ['trumpet', 'arts', 'Music', 'Trumpet', 'trumpet', 'Song', 'full playthroughs'],
   ['drums', 'arts', 'Music', 'Drums', 'drum', 'Song', 'full playthroughs'],
   ['cooking', 'arts', 'Culinary', 'Cooking', 'cooking-pot', 'Dish', 'times made'],
+  ['baking', 'arts', 'Culinary', 'Baking', 'bread', 'Recipe', 'times baked'],
   ['drawing', 'arts', 'Visual Arts', 'Drawing', 'pencil', 'Piece', 'sessions'],
   ['graphicdesign', 'arts', 'Visual Arts', 'Graphic Design', 'pencil-ruler', 'Project', 'iterations'],
+  ['videoediting', 'arts', 'Visual Arts', 'Video Editing', 'video-camera', 'Video', 'edits'],
+  ['modeling3d', 'arts', 'Visual Arts', '3D Modeling', 'cubes', 'Model', 'iterations'],
   ['woodworking', 'arts', 'Crafts', 'Woodworking', 'hand-saw', 'Project', 'built'],
+  ['metalworking', 'arts', 'Crafts', 'Metalworking', 'anvil-impact', 'Project', 'built'],
+  ['pottery', 'arts', 'Crafts', 'Pottery', 'painted-pottery', 'Piece', 'made'],
+  ['sewing', 'arts', 'Crafts', 'Sewing', 'sewing-needle', 'Project', 'made'],
+  ['maintenance', 'arts', 'Crafts', 'Maintenance', 'auto-repair', 'Repair', 'done'],
   ['writing', 'arts', 'Literary', 'Writing', 'quill-ink', 'Piece', 'drafts'],
+  ['electrical', 'arts', 'Engineering', 'Electrical Engineering', 'circuitry', 'Project', 'built'],
+  ['software', 'arts', 'Engineering', 'Software Engineering', 'keyboard', 'Project', 'shipped'],
 
   ['social', 'exp', 'People', 'Social', 'three-friends', 'Person', 'hangouts'],
   ['travel', 'exp', 'World', 'Travel', 'airplane-departure', 'Place', 'visits'],
-  ['entertainment', 'exp', 'Leisure', 'Entertainment', 'popcorn', 'Title', 'times'],
+  ['mandarin', 'exp', 'World', 'Mandarin', 'pagoda', 'Lesson', 'completed'],
+  ['korean', 'exp', 'World', 'Korean', 'south-korea', 'Lesson', 'completed'],
+  ['japanese', 'exp', 'World', 'Japanese', 'japan', 'Lesson', 'completed'],
+  ['movies', 'exp', 'Leisure', 'Movies', 'film-projector', 'Movie', 'times watched'],
+  ['tvshows', 'exp', 'Leisure', 'TV Shows', 'tv', 'Show', 'times watched'],
+  ['videogames', 'exp', 'Leisure', 'Video Games', 'gamepad', 'Game', 'playthroughs'],
+  ['books', 'exp', 'Leisure', 'Books', 'book-pile', 'Book', 'reads'],
 ];
 
 const KEY = 'lifetree.v2';
@@ -525,7 +541,7 @@ function makeSkill([id, cat, group, name, icon, noun, count]) {
 function freshState() {
   return {
     profile: { name: 'Player One', birth: '', lifespan: 80, avatar: 'wizard-staff', sleep: 8, busy: 8 },
-    version: 4,
+    version: 5,
     skills: DEFAULT_SKILLS.map(makeSkill),
     logs: [],    // time: { id, skill, minutes, date, note, ts }
     items: [],   // counters: { id, skill, name, ts }
@@ -547,7 +563,7 @@ function migrate() {
     // v3: STRDEX → PHYS (+ hiking, biking), MUSIC folded into CRAFT as a "Music" branch, new EXP tree
     for (const s of state.skills) if (s.cat === 'music') { s.cat = 'arts'; s.group = 'Music'; }
     const have = new Set(state.skills.map(s => s.id));
-    for (const d of DEFAULT_SKILLS) if (['hiking', 'biking', 'social', 'travel', 'entertainment'].includes(d[0]) && !have.has(d[0])) state.skills.push(makeSkill(d));
+    for (const d of DEFAULT_SKILLS) if (['hiking', 'biking', 'social', 'travel'].includes(d[0]) && !have.has(d[0])) state.skills.push(makeSkill(d));
     state.version = 3;
   }
   if ((state.version || 0) < 4) {
@@ -559,6 +575,22 @@ function migrate() {
       defaults.forEach((g, i) => { if (!list.includes(g)) list.splice(Math.min(i, list.length), 0, g); });
     }
     state.version = 4;
+  }
+  if ((state.version || 0) < 5) {
+    // v5: new default skills. Each goes at the end of its branch (or a new branch) unless it already exists.
+    const NEW = ['movies', 'tvshows', 'videogames', 'books', 'running', 'baking', 'videoediting', 'modeling3d', 'metalworking', 'pottery', 'sewing', 'maintenance', 'electrical', 'software', 'mandarin', 'korean', 'japanese'];
+    const have = new Set(state.skills.map(s => s.id));
+    for (const d of DEFAULT_SKILLS) {
+      if (!NEW.includes(d[0]) || have.has(d[0])) continue;
+      const sk = makeSkill(d);
+      const last = state.skills.findLastIndex(s => s.cat === sk.cat && s.group === sk.group);
+      state.skills.splice(last < 0 ? state.skills.length : last + 1, 0, sk);
+    }
+    // Entertainment was split into Movies / TV Shows / Video Games / Books; drop it only if it was never used
+    const ent = state.skills.find(s => s.id === 'entertainment');
+    if (ent && !ent.base && !state.logs.some(l => l.skill === 'entertainment') && !state.items.some(i => i.skill === 'entertainment') && !(state.records || []).some(r => r.skill === 'entertainment'))
+      state.skills = state.skills.filter(s => s !== ent);
+    state.version = 5;
   }
   state.profile.sleep ??= 8;
   state.profile.busy ??= 8;
